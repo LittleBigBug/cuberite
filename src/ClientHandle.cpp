@@ -222,6 +222,28 @@ bool cClientHandle::IsUUIDOnline(const cUUID & a_UUID)
 
 
 
+void cClientHandle::ProxyInit(const AString & a_IPString, const cUUID & a_UUID)
+{
+	this->SetIPString(a_IPString);
+	this->SetUUID(a_UUID);
+
+	this->m_ProxyConnection = true;
+}
+
+
+
+
+
+void cClientHandle::ProxyInit(const AString & a_IPString, const cUUID & a_UUID, const Json::Value & a_Properties)
+{
+	this->SetProperties(a_Properties);
+	this->ProxyInit(a_IPString, a_UUID);
+}
+
+
+
+
+
 void cClientHandle::ProcessProtocolOut()
 {
 	decltype(m_OutgoingData) OutgoingData;
@@ -264,6 +286,58 @@ void cClientHandle::Kick(const AString & a_Reason)
 
 
 
+bool cClientHandle::BungeeAuthenticate()
+{
+	if (!m_ProxyConnection && cRoot::Get()->GetServer()->OnlyAllowBungeeCord())
+	{
+		Kick("You can only connect to this server using a Proxy.");
+
+		return false;
+	}
+
+	cServer * Server = cRoot::Get()->GetServer();
+
+	// Proxy Forward Secret Check (BungeeGuard)
+	const AString & ForwardSecret = Server->GetProxyForwardSecret();
+	const bool AllowBungee = Server->ShouldAllowBungeeCord();
+	const bool RequireForwardSecret = AllowBungee && !ForwardSecret.empty();
+
+	bool AuthenticatedSecret = !RequireForwardSecret;
+
+	if (RequireForwardSecret)
+	{
+		for (auto & Node : GetProperties())
+		{
+			if (Node.get("name", "").asString() == "bungeeguard-token")
+			{
+				AString SentToken = Node.get("value", "").asString();
+
+				if (ForwardSecret.compare(SentToken) == 0)
+				{
+					AuthenticatedSecret = true;
+				}
+
+				break;
+			}
+		}
+	}
+	else if (m_ProxyConnection)
+	{
+		LOG("There is not a Proxy Forward Secret set up, and any proxy server can forward a player to this server unless closed from the internet.");
+	}
+
+	if (!AuthenticatedSecret)
+	{
+		Kick("Unable to authenticate.");
+	}
+
+	return AuthenticatedSecret;
+}
+
+
+
+
+
 void cClientHandle::Authenticate(const AString & a_Name, const cUUID & a_UUID, const Json::Value & a_Properties)
 {
 	{
@@ -280,6 +354,11 @@ void cClientHandle::Authenticate(const AString & a_Name, const cUUID & a_UUID, c
 		}
 
 		ASSERT(m_Player == nullptr);
+
+		if (!BungeeAuthenticate())
+		{
+			return;
+		}
 
 		m_Username = a_Name;
 
