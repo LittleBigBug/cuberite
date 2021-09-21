@@ -60,23 +60,76 @@ void cArmorStand::OnRightClicked(cPlayer & a_Player)
 
 void cArmorStand::OnClickedAt(cPlayer & a_Player, Vector3f a_TargetPos, bool a_UsedMainHand)
 {
-	if (IsMarker() || a_Player.GetEquippedItem().IsEmpty())  // Disallow interaction with marker and prevent acting if no item
+    // Disallow interaction if it's a marker
+	if (IsMarker())
 	{
+		return;
+	}
+
+    cItem EquippedItem = a_Player.GetEquippedItem();
+
+	// Maybe trying to get back an item
+    if (EquippedItem.IsEmpty())
+    {
+		const bool Small = IsSizeSmall();
+		float PosCheck = Small ? a_TargetPos.y * 2.0f : a_TargetPos.y;
+
+		const cItem DummyEmptyItem;
+		cItem Item;
+
+		if (!GetEquippedBoots().IsEmpty()
+			&& (PosCheck >= 0.1f)
+			&& (PosCheck < 0.1f + (Small ? 0.8f : 0.45f)))
+        {
+            Item = GetEquippedBoots();
+			SetEquippedBoots(DummyEmptyItem);
+		}
+		else if (!GetEquippedLeggings().IsEmpty()
+                 && (PosCheck >= 0.4f)
+                 && (PosCheck < 0.4f + (Small ? 1.0f : 0.8f)))
+        {
+            Item = GetEquippedLeggings();
+			SetEquippedLeggings(DummyEmptyItem);
+		}
+		else if (!GetEquippedChestplate().IsEmpty()
+                 && (PosCheck >= 0.9f + (Small ? 0.3f : 0))
+                 && (PosCheck < 0.9f + (Small ? 1.0f : 0.7f)))
+        {
+            Item = GetEquippedChestplate();
+			SetEquippedChestplate(DummyEmptyItem);
+		}
+		else if (!GetEquippedHelmet().IsEmpty()
+				 && (PosCheck >= 1.6f))
+        {
+            Item = GetEquippedHelmet();
+			SetEquippedHelmet(DummyEmptyItem);
+		}
+
+		if (!Item.IsEmpty())
+        {
+			cItems Items;
+			Items.emplace_back(Item);
+
+			GetWorld()->SpawnItemPickups(Items, GetPosX(), GetPosY() + (GetHeight() / 2), GetPosZ(), 5);
+		}
+
 		return;
 	}
 
 	if (a_UsedMainHand)
 	{
-		short ItemType = a_Player.GetEquippedItem().m_ItemType;
+		short ItemType = EquippedItem.m_ItemType;
 
-		if (ItemCategory::IsArmor(ItemType))  // OR find the best place for the item on the armor stand
+		// Trying to add Armor to stand
+		if (ItemCategory::IsArmor(ItemType))
 		{
 			if (ItemCategory::IsHelmet(ItemType))
 			{
-				if (!GetEquippedHelmet().IsEmpty())  // That way, we don't remove the item from the player
+				if (!GetEquippedHelmet().IsEmpty())
 				{
 					return;
 				}
+
 				SetEquippedHelmet(a_Player.GetEquippedItem());
 			}
 			else if (ItemCategory::IsChestPlate(ItemType))
@@ -85,6 +138,7 @@ void cArmorStand::OnClickedAt(cPlayer & a_Player, Vector3f a_TargetPos, bool a_U
 				{
 					return;
 				}
+
 				SetEquippedChestplate(a_Player.GetEquippedItem());
 			}
 			else if (ItemCategory::IsLeggings(ItemType))
@@ -93,6 +147,7 @@ void cArmorStand::OnClickedAt(cPlayer & a_Player, Vector3f a_TargetPos, bool a_U
 				{
 					return;
 				}
+
 				SetEquippedLeggings(a_Player.GetEquippedItem());
 			}
 			else if (ItemCategory::IsBoots(ItemType))
@@ -101,28 +156,27 @@ void cArmorStand::OnClickedAt(cPlayer & a_Player, Vector3f a_TargetPos, bool a_U
 				{
 					return;
 				}
+
 				SetEquippedBoots(a_Player.GetEquippedItem());
 			}
-			else if (ItemCategory::IsTool(ItemType) && HasArms() && GetEquippedWeapon().IsEmpty())
+			else
 			{
-				SetEquippedWeapon(a_Player.GetEquippedItem());
-			}
-			else if (GetOffHandEquipedItem().IsEmpty() && HasArms())
-			{
-				SetOffHandEquipedItem(a_Player.GetEquippedItem());
-			}
-			else  // No place on the armor
-			{
-				return;  // Don't stole the item from the player if we haven't used it
+				return;
 			}
 		}
+
+		// Trying to add tools or held items
+        else if (ItemCategory::IsTool(ItemType) && HasArms() && GetEquippedWeapon().IsEmpty())
+        {
+            SetEquippedWeapon(a_Player.GetEquippedItem());
+        }
 		else if (GetOffHandEquipedItem().IsEmpty() && HasArms())
 		{
 			SetOffHandEquipedItem(a_Player.GetEquippedItem());
 		}
-		else  // No place on the armor
+		else
 		{
-			return;  // Don't stole the item from the player if we haven't used it
+			return;
 		}
 
 		if (!a_Player.IsGameModeCreative())
@@ -183,34 +237,42 @@ bool cArmorStand::DoTakeDamage(TakeDamageInfo & a_TDI)
 			Destroy();
 
 			cItems Pickup;
+
 			if (!m_LeftHand.IsEmpty())
 			{
 				Pickup.push_back(m_LeftHand);
 			}
+
 			if (!m_RightHand.IsEmpty())
 			{
 				Pickup.push_back(m_RightHand);
 			}
+
 			if (!m_Helmet.IsEmpty())
 			{
 				Pickup.push_back(m_Helmet);
 			}
+
 			if (!m_ChestPlate.IsEmpty())
 			{
 				Pickup.push_back(m_ChestPlate);
 			}
+
 			if (!m_Leggings.IsEmpty())
 			{
 				Pickup.push_back(m_Leggings);
 			}
+
 			if (!m_Boots.IsEmpty())
 			{
 				Pickup.push_back(m_Boots);
 			}
+
 			Pickup.push_back(cItem(E_ITEM_ARMOR_STAND));
-			GetWorld()->SpawnItemPickups(Pickup, GetPosX(), GetPosY() + (GetHeight() / 2), GetPosZ());
+			GetWorld()->SpawnItemPickups(Pickup, GetPosX(), GetPosY() + (GetHeight() / 2), GetPosZ(), 5);
 		}
 	}
+
 	return false;
 }
 
