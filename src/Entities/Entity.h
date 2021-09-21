@@ -1,6 +1,7 @@
 
 #pragma once
 
+#include "../BoundingBox.h"
 #include "../Item.h"
 #include "../OSSupport/AtomicUniquePtr.h"
 
@@ -12,7 +13,7 @@
 #define CLASS_PROTODEF(classname) \
 	virtual bool IsA(const char * a_ClassName) const override\
 	{ \
-		return ((a_ClassName != nullptr) && ((strcmp(a_ClassName, #classname) == 0) || super::IsA(a_ClassName))); \
+		return ((a_ClassName != nullptr) && ((strcmp(a_ClassName, #classname) == 0) || Super::IsA(a_ClassName))); \
 	} \
 	virtual const char * GetClass(void) const override \
 	{ \
@@ -24,7 +25,7 @@
 	} \
 	virtual const char * GetParentClass(void) const override \
 	{ \
-		return super::GetClass(); \
+		return Super::GetClass(); \
 	}
 
 #define POSX_TOINT FloorC(GetPosX())
@@ -80,7 +81,6 @@ protected:
 		cWorld * m_NewWorld;
 		Vector3d m_NewPosition;
 		bool m_SetPortalCooldown;
-		bool m_SendRespawn;
 	};
 
 public:
@@ -110,48 +110,6 @@ public:
 
 	// tolua_end
 
-	enum eEntityStatus
-	{
-		// TODO: Investigate 0, 1, and 5 as Wiki.vg is not certain
-
-		// Entity becomes coloured red
-		esGenericHurt            = 2,
-		// Entity plays death animation (entity falls to ground)
-		esGenericDead            = 3,
-		// Iron Golem plays attack animation (arms lift and fall)
-		esIronGolemAttacking     = 4,
-		// Wolf taming particles spawn (smoke)
-		esWolfTaming             = 6,
-		// Wolf tamed particles spawn (hearts)
-		esWolfTamed              = 7,
-		// Wolf plays water removal animation (shaking and water particles)
-		esWolfDryingWater        = 8,
-		// Informs client that eating was accepted
-		esPlayerEatingAccepted   = 9,
-		// Sheep plays eating animation (head lowers to ground)
-		esSheepEating            = 10,
-		// Iron Golem holds gift to villager children
-		esIronGolemGivingPlant   = 11,
-		// Villager spawns heart particles
-		esVillagerBreeding       = 12,
-		// Villager spawns thunderclound particles
-		esVillagerAngry          = 13,
-		// Villager spawns green crosses
-		esVillagerHappy          = 14,
-		// Witch spawns magic particle (TODO: investigation into what this is)
-		esWitchMagicking         = 15,
-
-		// It seems 16 (zombie conversion) is now done with metadata
-
-		// Informs client to explode a firework based on its metadata
-		esFireworkExploding      = 17,
-		// Passive mob is in "love mode"
-		esMobInLove              = 18,
-
-		// Armor stand "hit sound, and resets a hit cooldown.". Shaking effect
-		esArmorStandHit          = 32,
-	} ;
-
 	static const int FIRE_TICKS_PER_DAMAGE = 10;   ///< Ticks to wait between damaging an entity when it stands in fire
 	static const int FIRE_DAMAGE           = 1;    ///< Damage to deal when standing in fire
 	static const int LAVA_TICKS_PER_DAMAGE = 10;   ///< Ticks to wait between damaging an entity when it stands in lava
@@ -171,12 +129,12 @@ public:
 	static const UInt32 INVALID_ID = 0;  // Exported to Lua in ManualBindings.cpp, ToLua doesn't parse initialized constants.
 
 
-	cEntity(eEntityType a_EntityType, Vector3d a_Pos, double a_Width, double a_Height);
-	virtual ~cEntity();
+	cEntity(eEntityType a_EntityType, Vector3d a_Pos, float a_Width, float a_Height);
+	virtual ~cEntity() = default;
 
 	/** Spawns the entity in the world; returns true if spawned, false if not (plugin disallowed).
 	Adds the entity to the world. */
-	virtual bool Initialize(OwnedEntity a_Self, cWorld & a_EntityWorld);
+	bool Initialize(OwnedEntity a_Self, cWorld & a_EntityWorld);
 
 	/** Called when the entity is added to a world.
 	e.g after first spawning or after successfuly moving between worlds.
@@ -192,6 +150,7 @@ public:
 
 	eEntityType GetEntityType(void) const { return m_EntityType; }
 
+	bool IsArrow       (void) const { return IsA("cArrowEntity");              }
 	bool IsEnderCrystal(void) const { return (m_EntityType == etEnderCrystal); }
 	bool IsPlayer      (void) const { return (m_EntityType == etPlayer);       }
 	bool IsPickup      (void) const { return (m_EntityType == etPickup);       }
@@ -227,7 +186,7 @@ public:
 	cWorld * GetWorld(void) const { return m_World; }
 
 	double           GetHeadYaw   (void) const { return m_HeadYaw; }  // In degrees
-	double           GetHeight    (void) const { return m_Height;  }
+	float            GetHeight    (void) const { return m_Height;  }
 	double           GetMass      (void) const { return m_Mass;    }
 	double           GetPosX      (void) const { return m_Position.x; }
 	double           GetPosY      (void) const { return m_Position.y; }
@@ -239,10 +198,13 @@ public:
 	double           GetSpeedX    (void) const { return m_Speed.x; }
 	double           GetSpeedY    (void) const { return m_Speed.y; }
 	double           GetSpeedZ    (void) const { return m_Speed.z; }
-	double           GetWidth     (void) const { return m_Width;   }
+	float            GetWidth     (void) const { return m_Width;   }
 
 	int GetChunkX(void) const { return FloorC(m_Position.x / cChunkDef::Width); }
 	int GetChunkZ(void) const { return FloorC(m_Position.z / cChunkDef::Width); }
+
+	// Get the Entity's axis aligned bounding box, with absolute (world-relative) coordinates.
+	cBoundingBox GetBoundingBox() const { return cBoundingBox(GetPosition(), GetWidth() / 2, GetHeight()); }
 
 	void SetHeadYaw (double a_HeadYaw);
 	void SetMass    (double a_Mass);
@@ -294,14 +256,10 @@ public:
 	If this returns false, you must stop using the cEntity pointer you have. */
 	bool IsTicking(void) const;
 
+	// tolua_end
 	/** Destroys the entity, schedules it for memory freeing and broadcasts the DestroyEntity packet */
-	virtual void Destroy();
-
-	OBSOLETE void Destroy(bool a_ShouldBroadcast)
-	{
-		LOGWARNING("cEntity:Destory(bool) is deprecated, use cEntity:Destroy() instead.");
-		Destroy();
-	}
+	void Destroy();
+	// tolua_begin
 
 	/** Makes this pawn take damage from an attack by a_Attacker. Damage values are calculated automatically and DoTakeDamage() called */
 	void TakeDamage(cEntity & a_Attacker);
@@ -331,10 +289,6 @@ public:
 
 	// tolua_end
 
-	void SetHeight(double a_Height);
-
-	void SetWidth(double a_Width);
-
 	/** Exported in ManualBindings */
 	const Vector3d & GetPosition(void) const { return m_Position; }
 
@@ -343,10 +297,7 @@ public:
 
 	/** Returns the last position we sent to all the clients. Use this to
 	initialize clients with our position. */
-	Vector3d GetLastSentPos(void) const { return m_LastSentPosition; }
-
-	/** Destroy the entity without scheduling memory freeing. This should only be used by cChunk or cClientHandle for internal memory management. */
-	void DestroyNoScheduling(bool a_ShouldBroadcast);
+	Vector3d GetLastSentPosition(void) const { return m_LastSentPosition; }
 
 	/** Makes this entity take damage specified in the a_TDI.
 	The TDI is sent through plugins first, then applied.
@@ -427,6 +378,9 @@ public:
 	/** Detects the time for application of cacti damage */
 	virtual void DetectCacti(void);
 
+	/** Detects the time for application of magma block damage */
+	virtual void DetectMagma(void);
+
 	/** Detects whether we are in a portal block and begins teleportation procedures if so
 	Returns true if MoveToWorld() was called, false if not
 	*/
@@ -473,22 +427,15 @@ public:
 	/** Teleports to the coordinates specified */
 	virtual void TeleportToCoords(double a_PosX, double a_PosY, double a_PosZ);
 
-	/** Schedules a MoveToWorld call to occur on the next Tick of the entity */
-	OBSOLETE void ScheduleMoveToWorld(cWorld * a_World, Vector3d a_NewPosition, bool a_ShouldSetPortalCooldown = false, bool a_ShouldSendRespawn = false)
-	{
-		LOGWARNING("ScheduleMoveToWorld is deprecated, use MoveToWorld instead");
-		MoveToWorld(a_World, a_NewPosition, a_ShouldSetPortalCooldown, a_ShouldSendRespawn);
-	}
+	bool MoveToWorld(cWorld & a_World, Vector3d a_NewPosition, bool a_ShouldSetPortalCooldown = false, bool a_ShouldSendRespawn = true);
 
-	bool MoveToWorld(cWorld * a_World, Vector3d a_NewPosition, bool a_ShouldSetPortalCooldown = false, bool a_ShouldSendRespawn = false);
-
-	bool MoveToWorld(cWorld * a_World, bool a_ShouldSendRespawn, Vector3d a_NewPosition)
+	bool MoveToWorld(cWorld & a_World, bool a_ShouldSendRespawn, Vector3d a_NewPosition)
 	{
 		return MoveToWorld(a_World, a_NewPosition, false, a_ShouldSendRespawn);
 	}
 
 	/** Moves entity to specified world, taking a world pointer */
-	bool MoveToWorld(cWorld * a_World, bool a_ShouldSendRespawn = true);
+	bool MoveToWorld(cWorld & a_World, bool a_ShouldSendRespawn = true);
 
 	/** Moves entity to specified world, taking a world name */
 	bool MoveToWorld(const AString & a_WorldName, bool a_ShouldSendRespawn = true);
@@ -498,7 +445,7 @@ public:
 	/** Returns true if a world change is scheduled to happen. */
 	bool IsWorldChangeScheduled() const
 	{
-		return (m_WorldChangeInfo.load() != nullptr);
+		return (m_WorldChangeInfo.m_NewWorld != nullptr);
 	}
 
 	/** Updates clients of changes in the entity. */
@@ -529,6 +476,10 @@ public:
 
 	// tolua_end
 
+	/** Returns whether the entity's orientation has been set manually.
+	Primarily inteded for protocol use. */
+	bool IsOrientationDirty() const;
+
 	/** Makes sure head yaw is not over the specified range. */
 	void WrapHeadYaw();
 
@@ -541,12 +492,13 @@ public:
 	// tolua_begin
 
 	// COMMON metadata flags; descendants may override the defaults:
-	virtual bool IsOnFire   (void) const {return (m_TicksLeftBurning > 0); }
-	virtual bool IsCrouched (void) const {return false; }
-	virtual bool IsRiding   (void) const {return false; }
-	virtual bool IsSprinting(void) const {return false; }
-	virtual bool IsRclking  (void) const {return false; }
-	virtual bool IsInvisible(void) const { return false; }
+	virtual bool IsCrouched    (void) const { return false; }
+	virtual bool IsElytraFlying(void) const { return false; }
+	virtual bool IsInvisible   (void) const { return false; }
+	virtual bool IsOnFire      (void) const { return m_TicksLeftBurning > 0; }
+	virtual bool IsRclking     (void) const { return false; }
+	virtual bool IsRiding      (void) const { return false; }
+	virtual bool IsSprinting   (void) const { return false; }
 
 	/** Returns true if any part of the entity is in a fire block */
 	virtual bool IsInFire(void) const { return m_IsInFire; }
@@ -563,7 +515,7 @@ public:
 	/** Gets remaining air of a monster */
 	int GetAirLevel(void) const { return m_AirLevel; }
 
-	/** Gets number of ticks this entity has existed for */
+	/** Gets number of ticks this entity has been alive for */
 	long int GetTicksAlive(void) const { return m_TicksAlive; }
 
 	/** Gets the invulnerable ticks from the entity */
@@ -581,7 +533,7 @@ public:
 	virtual void OnRightClicked(cPlayer & a_Player) {}
 
 	/** Called when the specified player interact at specific coords of this entity. Depend of entity and mostly used by ArmorStand */
-	virtual void OnClickedAt(cPlayer & a_Player, Vector3f a_TargetPos, eHand a_Hand) {}
+	virtual void OnClickedAt(cPlayer & a_Player, Vector3f a_TargetPos, bool a_UsedMainHand) {}
 
 	/** Returns the list of drops for this pawn when it is killed. May check a_Killer for special handling (sword of looting etc.). Called from KilledBy(). */
 	virtual void GetDrops(cItems & a_Drops, cEntity * a_Killer = nullptr)
@@ -604,24 +556,20 @@ public:
 	/** Set the entity's status to either ticking or not ticking. */
 	void SetIsTicking(bool a_IsTicking);
 
+	/** Update an entity's size, for example, on body stance changes. */
+	void SetSize(float a_Width, float a_Height);
+
 	/** Adds a mob to the leashed list of mobs. */
 	void AddLeashedMob(cMonster * a_Monster);
 
 	/** Removes a mob from the leashed list of mobs. */
 	void RemoveLeashedMob(cMonster * a_Monster);
 
-	/** Removes all mobs from the leashed list of mobs. */
-	void RemoveAllLeashedMobs();
-
 	/** Returs whether the entity has any mob leashed to it. */
 	bool HasAnyMobLeashed() const { return m_LeashedMobs.size() > 0; }
 
-	/** a lightweight calculation approach to get explosion exposure rate
-	@param a_ExplosionPosition explosion position
-	@param a_ExlosionPower explosion power
-	@return exposure rate */
-	virtual float GetExplosionExposureRate(Vector3d a_ExplosionPosition, float a_ExlosionPower);
-
+	/** Announces a death message on chat about killing the entity. */
+	void BroadcastDeathMessage(TakeDamageInfo & a_TDI);
 
 protected:
 
@@ -687,8 +635,8 @@ protected:
 
 	cWorld * m_World;
 
-	/** If not nullptr, a world change is scheduled and a task is queued in the current world. */
-	cAtomicUniquePtr<sWorldChangeInfo> m_WorldChangeInfo;
+	/** If field m_NewWorld not nullptr, a world change is scheduled and a task is queued in the current world. */
+	sWorldChangeInfo m_WorldChangeInfo;
 
 	/** Whether the entity is capable of taking fire or lava damage. */
 	bool m_IsFireproof;
@@ -730,16 +678,9 @@ protected:
 	/** The number of ticks this entity has been alive for */
 	long int m_TicksAlive;
 
-
-	/** Does the actual speed-setting. The default implementation just sets the member variable value;
-	overrides can provide further processing, such as forcing players to move at the given speed. */
-	virtual void DoSetSpeed(double a_SpeedX, double a_SpeedY, double a_SpeedZ);
-
 	/** Handles the moving of this entity between worlds.
 	Should handle degenerate cases such as moving to the same world. */
-	virtual void DoMoveToWorld(const sWorldChangeInfo & a_WorldChangeInfo);
-
-	virtual void Destroyed(void) {}  // Called after the entity has been destroyed
+	void DoMoveToWorld(const sWorldChangeInfo & a_WorldChangeInfo);
 
 	/** Applies friction to an entity
 	@param a_Speed The speed vector to apply changes to
@@ -784,10 +725,10 @@ private:
 	double m_Mass;
 
 	/** Width of the entity, in the XZ plane. Since entities are represented as cylinders, this is more of a diameter. */
-	double m_Width;
+	float m_Width;
 
-	/** Height of the entity (Y axis) */
-	double m_Height;
+	/** Height of the entity (Y axis). */
+	float m_Height;
 
 	/** If a player hit a entity, the entity receive a invulnerable of 10 ticks.
 	While this ticks, a player can't hit this entity. */

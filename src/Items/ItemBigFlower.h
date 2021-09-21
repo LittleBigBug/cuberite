@@ -2,6 +2,7 @@
 #pragma once
 
 #include "ItemHandler.h"
+#include "../BlockInfo.h"
 
 
 
@@ -10,46 +11,42 @@
 class cItemBigFlowerHandler:
 	public cItemHandler
 {
-	typedef cItemHandler super;
+	using Super = cItemHandler;
 
 public:
-	cItemBigFlowerHandler(void):
-		super(E_BLOCK_BIG_FLOWER)
+
+	cItemBigFlowerHandler():
+		Super(E_BLOCK_BIG_FLOWER)
 	{
 	}
 
 
-	virtual bool GetBlocksToPlace(
-		cWorld & a_World, cPlayer & a_Player, const cItem & a_EquippedItem,
-		int a_BlockX, int a_BlockY, int a_BlockZ, eBlockFace a_BlockFace,
-		int a_CursorX, int a_CursorY, int a_CursorZ,
-		sSetBlockVector & a_BlocksToSet
-	) override
+
+
+
+	virtual bool CommitPlacement(cPlayer & a_Player, const cItem & a_HeldItem, const Vector3i a_PlacePosition, const eBlockFace a_ClickedBlockFace, const Vector3i a_CursorPosition) override
 	{
-		// Can only be placed on dirt:
-		if ((a_BlockY <= 0) || !IsBlockTypeOfDirt(a_World.GetBlock(a_BlockX, a_BlockY - 1, a_BlockZ)))
+		// Needs at least two free blocks to build in:
+		if (a_PlacePosition.y >= (cChunkDef::Height - 1))
 		{
 			return false;
 		}
 
-		// Needs at least two free blocks to build in
-		if (a_BlockY >= cChunkDef::Height - 1)
-		{
-			return false;
-		}
-
+		const auto & World = *a_Player.GetWorld();
+		const auto TopPos = a_PlacePosition.addedY(1);
 		BLOCKTYPE TopType;
 		NIBBLETYPE TopMeta;
-		a_World.GetBlockTypeMeta(a_BlockX, a_BlockY + 1, a_BlockZ, TopType, TopMeta);
-		cChunkInterface ChunkInterface(a_World.GetChunkMap());
+		World.GetBlockTypeMeta(TopPos, TopType, TopMeta);
 
-		if (!BlockHandler(TopType)->DoesIgnoreBuildCollision(ChunkInterface, { a_BlockX, a_BlockY + 1, a_BlockZ }, a_Player, TopMeta))
+		if (!cBlockHandler::For(TopType).DoesIgnoreBuildCollision(World, a_HeldItem, TopPos, TopMeta, a_ClickedBlockFace, false))
 		{
 			return false;
 		}
 
-		a_BlocksToSet.emplace_back(a_BlockX, a_BlockY,     a_BlockZ, E_BLOCK_BIG_FLOWER, a_EquippedItem.m_ItemDamage & 0x07);
-		a_BlocksToSet.emplace_back(a_BlockX, a_BlockY + 1, a_BlockZ, E_BLOCK_BIG_FLOWER, E_META_BIG_FLOWER_TOP);
-		return true;
+		return a_Player.PlaceBlocks(
+		{
+			{ a_PlacePosition, E_BLOCK_BIG_FLOWER, static_cast<NIBBLETYPE>(a_HeldItem.m_ItemDamage & 0x07) },
+			{ TopPos,          E_BLOCK_BIG_FLOWER, E_META_BIG_FLOWER_TOP }
+		});
 	}
 };

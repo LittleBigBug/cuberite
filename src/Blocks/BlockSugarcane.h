@@ -7,23 +7,18 @@
 
 
 
-class cBlockSugarcaneHandler :
+class cBlockSugarcaneHandler final :
 	public cBlockPlant<false>
 {
-	using super = cBlockPlant<false>;
+	using Super = cBlockPlant<false>;
 
 public:
 
-	cBlockSugarcaneHandler(BLOCKTYPE a_BlockType):
-		super(a_BlockType)
-	{
-	}
+	using Super::Super;
 
+private:
 
-
-
-
-	virtual cItems ConvertToPickups(NIBBLETYPE a_BlockMeta, cBlockEntity * a_BlockEntity, const cEntity * a_Digger, const cItem * a_Tool) override
+	virtual cItems ConvertToPickups(const NIBBLETYPE a_BlockMeta, const cItem * const a_Tool) const override
 	{
 		return cItem(E_ITEM_SUGARCANE, 1, 0);
 	}
@@ -32,36 +27,32 @@ public:
 
 
 
-	virtual bool CanBeAt(cChunkInterface & a_ChunkInterface, int a_RelX, int a_RelY, int a_RelZ, const cChunk & a_Chunk) override
+	virtual bool CanBeAt(const cChunk & a_Chunk, const Vector3i a_Position, const NIBBLETYPE a_Meta) const override
 	{
-		if (a_RelY <= 0)
+		if (a_Position.y <= 0)
 		{
 			return false;
 		}
 
-		switch (a_Chunk.GetBlock(a_RelX, a_RelY - 1, a_RelZ))
+		switch (a_Chunk.GetBlock(a_Position.addedY(-1)))
 		{
 			case E_BLOCK_DIRT:
 			case E_BLOCK_GRASS:
 			case E_BLOCK_FARMLAND:
 			case E_BLOCK_SAND:
 			{
-				static const struct
+				static const Vector3i Coords[] =
 				{
-					int x, z;
-				} Coords[] =
-				{
-					{-1,  0},
-					{ 1,  0},
-					{ 0, -1},
-					{ 0,  1},
+					{-1, -1,  0},
+					{ 1, -1,  0},
+					{ 0, -1, -1},
+					{ 0, -1,  1},
 				} ;
-				a_RelY -= 1;
 				for (size_t i = 0; i < ARRAYCOUNT(Coords); i++)
 				{
 					BLOCKTYPE BlockType;
 					NIBBLETYPE BlockMeta;
-					if (!a_Chunk.UnboundedRelGetBlock(a_RelX + Coords[i].x, a_RelY, a_RelZ + Coords[i].z, BlockType, BlockMeta))
+					if (!a_Chunk.UnboundedRelGetBlock(a_Position + Coords[i], BlockType, BlockMeta))
 					{
 						// Too close to the edge, cannot simulate
 						return true;
@@ -86,7 +77,7 @@ public:
 
 
 
-	virtual ColourID GetMapBaseColourID(NIBBLETYPE a_Meta) override
+	virtual ColourID GetMapBaseColourID(NIBBLETYPE a_Meta) const override
 	{
 		UNUSED(a_Meta);
 		return 7;
@@ -96,7 +87,7 @@ public:
 
 
 
-	virtual int Grow(cChunk & a_Chunk, Vector3i a_RelPos, int a_NumStages = 1) override
+	virtual int Grow(cChunk & a_Chunk, Vector3i a_RelPos, int a_NumStages = 1) const override
 	{
 		// Check the total height of the sugarcane blocks here:
 		int top = a_RelPos.y + 1;
@@ -133,18 +124,12 @@ public:
 		return toGrow;
 	}
 
-
-
-
-
-protected:
-
-	virtual PlantAction CanGrow(cChunk & a_Chunk, Vector3i a_RelPos) override
+	virtual PlantAction CanGrow(cChunk & a_Chunk, Vector3i a_RelPos) const override
 	{
 		// Only allow growing if there's an air block above:
 		if (((a_RelPos.y + 1) < cChunkDef::Height) && (a_Chunk.GetBlock(a_RelPos.addedY(1)) == E_BLOCK_AIR))
 		{
-			return super::CanGrow(a_Chunk, a_RelPos);
+			return Super::CanGrow(a_Chunk, a_RelPos);
 		}
 		return paStay;
 	}

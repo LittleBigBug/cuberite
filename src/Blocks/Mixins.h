@@ -24,49 +24,25 @@ class cBlockLadder: public cMetaRotator<cClearMetaOnDrop, ...>
 
 
 
-template <class Base = cBlockHandler>
-class cBlockWithNoDrops:
-	public Base
-{
-public:
-
-	cBlockWithNoDrops(BLOCKTYPE a_BlockType):
-		Base(a_BlockType)
-	{
-	}
-
-
-
-
-
-	virtual cItems ConvertToPickups(NIBBLETYPE a_BlockMeta, cBlockEntity * a_BlockEntity, const cEntity * a_Digger, const cItem * a_Tool) override
-	{
-		// Don't drop anything:
-		return {};
-	}
-};
-
-
-
-
-
 /** Mixin to clear the block's meta value when converting to a pickup. */
 template <class Base>
-class cClearMetaOnDrop:
+class cClearMetaOnDrop :
 	public Base
 {
 public:
 
-	cClearMetaOnDrop(BLOCKTYPE a_BlockType):
+	constexpr cClearMetaOnDrop(BLOCKTYPE a_BlockType):
 		Base(a_BlockType)
 	{
 	}
 
+protected:
 
+	~cClearMetaOnDrop() = default;
 
+private:
 
-
-	virtual cItems ConvertToPickups(NIBBLETYPE a_BlockMeta, cBlockEntity * a_BlockEntity, const cEntity * a_Digger, const cItem * a_Tool) override
+	virtual cItems ConvertToPickups(const NIBBLETYPE a_BlockMeta, const cItem * const a_Tool) const override
 	{
 		// Reset the meta to zero:
 		return cItem(this->m_BlockType);
@@ -81,20 +57,21 @@ public:
 Inherit from this class providing your base class as Base, the BitMask for the direction bits in bitmask and the masked value for the directions in North, East, South, West.
 There is also an aptional parameter AssertIfNotMatched, set this if it is invalid for a block to exist in any other state. */
 template <class Base, NIBBLETYPE BitMask, NIBBLETYPE North, NIBBLETYPE East, NIBBLETYPE South, NIBBLETYPE West, bool AssertIfNotMatched = false>
-class cMetaRotator:
+class cMetaRotator :
 	public Base
 {
 public:
 
-	cMetaRotator(BLOCKTYPE a_BlockType):
+	constexpr cMetaRotator(BLOCKTYPE a_BlockType):
 		Base(a_BlockType)
-	{}
+	{
+	}
 
+protected:
 
+	~cMetaRotator() = default;
 
-
-
-	virtual NIBBLETYPE MetaRotateCCW(NIBBLETYPE a_Meta) override
+	virtual NIBBLETYPE MetaRotateCCW(NIBBLETYPE a_Meta) const override
 	{
 		NIBBLETYPE OtherMeta = a_Meta & (~BitMask);
 		switch (a_Meta & BitMask)
@@ -115,7 +92,7 @@ public:
 
 
 
-	virtual NIBBLETYPE MetaRotateCW(NIBBLETYPE a_Meta) override
+	virtual NIBBLETYPE MetaRotateCW(NIBBLETYPE a_Meta) const override
 	{
 		NIBBLETYPE OtherMeta = a_Meta & (~BitMask);
 		switch (a_Meta & BitMask)
@@ -136,7 +113,7 @@ public:
 
 
 
-	virtual NIBBLETYPE MetaMirrorXY(NIBBLETYPE a_Meta) override
+	virtual NIBBLETYPE MetaMirrorXY(NIBBLETYPE a_Meta) const override
 	{
 		NIBBLETYPE OtherMeta = a_Meta & (~BitMask);
 		switch (a_Meta & BitMask)
@@ -152,7 +129,7 @@ public:
 
 
 
-	virtual NIBBLETYPE MetaMirrorYZ(NIBBLETYPE a_Meta) override
+	virtual NIBBLETYPE MetaMirrorYZ(NIBBLETYPE a_Meta) const override
 	{
 		NIBBLETYPE OtherMeta = a_Meta & (~BitMask);
 		switch (a_Meta & BitMask)
@@ -161,6 +138,125 @@ public:
 			case East: return West | OtherMeta;
 		}
 		// Not Facing East or West; No change.
+		return a_Meta;
+	}
+};
+
+
+
+
+
+/** Mixin for blocks whose meta on placement depends on the yaw of the player placing the block. BitMask
+selects the direction bits from the block's meta values. */
+template <
+	class Base,
+	NIBBLETYPE BitMask = 0x07,
+	NIBBLETYPE North = 0x02,
+	NIBBLETYPE East = 0x05,
+	NIBBLETYPE South = 0x03,
+	NIBBLETYPE West = 0x04,
+	bool AssertIfNotMatched = false
+>
+class cYawRotator :
+	public cMetaRotator<Base, BitMask, North, East, South, West, AssertIfNotMatched>
+{
+	using Super = cMetaRotator<Base, BitMask, North, East, South, West, AssertIfNotMatched>;
+
+public:
+
+	using Super::Super;
+
+
+	/** Converts the rotation value as returned by cPlayer::GetYaw() to the appropriate metadata
+	value for a block placed by a player facing that way. */
+	static NIBBLETYPE YawToMetaData(double a_Rotation)
+	{
+		if ((a_Rotation >= -135) && (a_Rotation < -45))
+		{
+			return East;
+		}
+		else if ((a_Rotation >= -45) && (a_Rotation < 45))
+		{
+			return South;
+		}
+		else if ((a_Rotation >= 45) && (a_Rotation < 135))
+		{
+			return West;
+		}
+		else  // degrees jumping from 180 to -180
+		{
+			return North;
+		}
+	}
+
+protected:
+
+	~cYawRotator() = default;
+};
+
+
+
+
+
+/** Mixin for blocks whose meta on placement depends on the relative position of the player to the block in
+addition to the yaw of the player placing the block. BitMask selects the direction bits from the block's meta values. */
+template <
+	class Base,
+	NIBBLETYPE BitMask = 0x07,
+	NIBBLETYPE North = 0x02,
+	NIBBLETYPE East = 0x05,
+	NIBBLETYPE South = 0x03,
+	NIBBLETYPE West = 0x04,
+	NIBBLETYPE Up = 0x00,
+	NIBBLETYPE Down = 0x01
+>
+class cDisplacementYawRotator:
+	public cYawRotator<Base, BitMask, North, East, South, West>
+{
+	using Super = cYawRotator<Base, BitMask, North, East, South, West>;
+
+public:
+
+	using Super::Super;
+
+
+	/** Converts the placement position, eye position as returned by cPlayer::GetEyePosition(), and
+	rotation value as returned by cPlayer::GetYaw() to the appropriate metadata value for a block placed by a player facing that way. */
+	static NIBBLETYPE DisplacementYawToMetaData(const Vector3d a_PlacePosition, const Vector3d a_EyePosition, const double a_Rotation)
+	{
+		if (
+			const auto Displacement = a_EyePosition - a_PlacePosition.addedXZ(0.5, 0.5);
+			(std::abs(Displacement.x) < 2) && (std::abs(Displacement.z) < 2)
+		)
+		{
+			if (Displacement.y > 2)
+			{
+				return Up;
+			}
+
+			if (Displacement.y < 0)
+			{
+				return Down;
+			}
+		}
+
+		return Super::YawToMetaData(a_Rotation);
+	}
+
+protected:
+
+	~cDisplacementYawRotator() = default;
+
+
+	virtual NIBBLETYPE MetaMirrorXZ(NIBBLETYPE a_Meta) const override
+	{
+		NIBBLETYPE OtherMeta = a_Meta & (~BitMask);
+		switch (a_Meta & BitMask)
+		{
+			case Down: return Up | OtherMeta;  // Down -> Up
+			case Up: return Down | OtherMeta;  // Up -> Down
+		}
+		// Not Facing Up or Down; No change.
 		return a_Meta;
 	}
 };

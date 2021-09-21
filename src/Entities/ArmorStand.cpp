@@ -3,18 +3,14 @@
 
 #include "ArmorStand.h"
 #include "Player.h"
-#include "../ClientHandle.h"
-#include "../Chunk.h"
-#include "../World.h"
 
 
 
 
 
 cArmorStand::cArmorStand(Vector3d a_Pos, double a_Yaw):
-	super(etArmorStand, a_Pos, 0.5, 0.9875),
+	Super(etArmorStand, a_Pos, 0.5, 0.9875),
 	m_IsVisible(true),
-	m_CustomName(""),
 	m_CustomNameAlwaysVisible(false),
 	m_TicksSinceLastDamaged(100),
 	m_IsSmall(false),
@@ -62,14 +58,14 @@ void cArmorStand::OnRightClicked(cPlayer & a_Player)
 
 
 
-void cArmorStand::OnClickedAt(cPlayer & a_Player, Vector3f a_TargetPos, eHand a_Hand)
+void cArmorStand::OnClickedAt(cPlayer & a_Player, Vector3f a_TargetPos, bool a_UsedMainHand)
 {
 	if (IsMarker() || a_Player.GetEquippedItem().IsEmpty())  // Disallow interaction with marker and prevent acting if no item
 	{
 		return;
 	}
 
-	if (a_Hand == eHand::hMain)
+	if (a_UsedMainHand)
 	{
 		short ItemType = a_Player.GetEquippedItem().m_ItemType;
 
@@ -142,7 +138,7 @@ void cArmorStand::OnClickedAt(cPlayer & a_Player, Vector3f a_TargetPos, eHand a_
 
 void cArmorStand::Tick(std::chrono::milliseconds a_Dt, cChunk & a_Chunk)
 {
-	super::Tick(a_Dt, a_Chunk);
+	Super::Tick(a_Dt, a_Chunk);
 	if (!IsTicking())
 	{
 		// The base class tick destroyed us
@@ -179,7 +175,7 @@ bool cArmorStand::DoTakeDamage(TakeDamageInfo & a_TDI)
 	{
 		if (a_TDI.Attacker->IsPlayer() && (m_TicksSinceLastDamaged >= 10))  // Needs two hit in 0.5s to destroy
 		{
-			GetWorld()->BroadcastEntityStatus(*this, esArmorStandHit);
+			// GetWorld()->BroadcastEntityStatus(*this, esArmorStandHit);
 			m_TicksSinceLastDamaged = 0;
 		}
 		else
@@ -224,7 +220,7 @@ bool cArmorStand::DoTakeDamage(TakeDamageInfo & a_TDI)
 
 void cArmorStand::SpawnOn(cClientHandle & a_ClientHandle)  // Should got any rotation and should replace non-solid blocks like snow when placed
 {
-	a_ClientHandle.SendSpawnObject(*this, 78, 0, static_cast<Byte>(GetYaw()), static_cast<Byte>(GetPitch()));
+	a_ClientHandle.SendSpawnEntity(*this);
 	a_ClientHandle.SendEntityMetadata(*this);
 	a_ClientHandle.SendEntityEquipment(*this, 0, GetEquippedWeapon());
 	a_ClientHandle.SendEntityEquipment(*this, 1, GetEquippedBoots());
@@ -295,8 +291,7 @@ void cArmorStand::SetCustomNameAlwaysVisible(bool a_CustomNameAlwaysVisible)
 
 void cArmorStand::SetSizeNormal()
 {
-	SetHeight(0.9875);
-	SetWidth(0.25);
+	SetSize(0.25, 0.9875);
 	m_IsSmall = false;
 	if (m_World != nullptr)
 	{
@@ -310,8 +305,7 @@ void cArmorStand::SetSizeNormal()
 
 void cArmorStand::SetSizeSmall()
 {
-	SetHeight(0.9875/2);
-	SetWidth(0.25/2);
+	SetSize(0.25 / 2, 0.9875 / 2);
 	m_IsSmall = true;
 	if (m_World != nullptr)
 	{
@@ -328,8 +322,7 @@ void cArmorStand::SetIsMarker(bool a_IsMarker)
 	m_IsMarker = a_IsMarker;
 	if (a_IsMarker)  // By default set size of marker to null
 	{
-		SetHeight(0);
-		SetWidth(0);
+		SetSize(0, 0);
 		if (m_World != nullptr)
 		{
 			m_World->BroadcastEntityMetadata(*this);

@@ -7,87 +7,28 @@
 
 
 
-class cBlockStairsHandler :
-	public cClearMetaOnDrop<cMetaRotator<cBlockHandler, 0x03, 0x03, 0x00, 0x02, 0x01, true>>
+class cBlockStairsHandler final :
+	public cClearMetaOnDrop<cYawRotator<cBlockHandler, 0x03, 0x03, 0x00, 0x02, 0x01, true>>
 {
-	using super = cClearMetaOnDrop<cMetaRotator<cBlockHandler, 0x03, 0x03, 0x00, 0x02, 0x01, true>>;
+	using Super = cClearMetaOnDrop<cYawRotator<cBlockHandler, 0x03, 0x03, 0x00, 0x02, 0x01, true>>;
 
 public:
 
-	cBlockStairsHandler(BLOCKTYPE a_BlockType):
-		super(a_BlockType)
-	{
+	using Super::Super;
 
-	}
+private:
 
-	virtual bool GetPlacementBlockTypeMeta(
-		cChunkInterface & a_ChunkInterface, cPlayer & a_Player,
-		int a_BlockX, int a_BlockY, int a_BlockZ, eBlockFace a_BlockFace,
-		int a_CursorX, int a_CursorY, int a_CursorZ,
-		BLOCKTYPE & a_BlockType, NIBBLETYPE & a_BlockMeta
-	) override
-	{
-		UNUSED(a_ChunkInterface);
-		UNUSED(a_BlockX);
-		UNUSED(a_BlockY);
-		UNUSED(a_BlockZ);
-		UNUSED(a_CursorX);
-		UNUSED(a_CursorZ);
-		a_BlockType = m_BlockType;
-		a_BlockMeta = RotationToMetaData(a_Player.GetYaw());
-		switch (a_BlockFace)
-		{
-			case BLOCK_FACE_TOP:    break;
-			case BLOCK_FACE_BOTTOM: a_BlockMeta = a_BlockMeta | 0x4; break;  // When placing onto a bottom face, always place an upside-down stairs block
-			case BLOCK_FACE_EAST:
-			case BLOCK_FACE_NORTH:
-			case BLOCK_FACE_SOUTH:
-			case BLOCK_FACE_WEST:
-			{
-				// When placing onto a sideways face, check cursor, if in top half, make it an upside-down stairs block
-				if (a_CursorY > 8)
-				{
-					a_BlockMeta |= 0x4;
-				}
-				break;
-			}
-			case BLOCK_FACE_NONE: return false;
-		}
-		return true;
-	}
-
-	static NIBBLETYPE RotationToMetaData(double a_Rotation)
-	{
-		a_Rotation += 90 + 45;  // So its not aligned with axis
-		if (a_Rotation > 360)
-		{
-			a_Rotation -= 360;
-		}
-		if ((a_Rotation >= 0) && (a_Rotation < 90))
-		{
-			return 0x0;
-		}
-		else if ((a_Rotation >= 180) && (a_Rotation < 270))
-		{
-			return 0x1;
-		}
-		else if ((a_Rotation >= 90) && (a_Rotation < 180))
-		{
-			return 0x2;
-		}
-		else
-		{
-			return 0x3;
-		}
-	}
-
-	virtual NIBBLETYPE MetaMirrorXZ(NIBBLETYPE a_Meta) override
+	virtual NIBBLETYPE MetaMirrorXZ(NIBBLETYPE a_Meta) const override
 	{
 		// Toggle bit 3:
 		return (a_Meta & 0x0b) | ((~a_Meta) & 0x04);
 	}
 
-	virtual ColourID GetMapBaseColourID(NIBBLETYPE a_Meta) override
+
+
+
+
+	virtual ColourID GetMapBaseColourID(NIBBLETYPE a_Meta) const override
 	{
 		UNUSED(a_Meta);
 		switch (m_BlockType)
@@ -114,12 +55,16 @@ public:
 		}
 	}
 
+
+
+
+
 	/** EXCEPTION a.k.a. why is this removed:
 	This collision-detection is actually more accurate than the client, but since the client itself
 	sends inaccurate / sparse data, it's easier to just err on the side of the client and keep the
 	two in sync by assuming that if a player hit ANY of the stair's bounding cube, it counts as the ground. */
 	#if 0
-	bool IsInsideBlock(const Vector3d & a_Position, const BLOCKTYPE a_BlockType, const NIBBLETYPE a_BlockMeta)
+	bool IsInsideBlock(Vector3d a_RelPosition, const BLOCKTYPE a_BlockType, const NIBBLETYPE a_BlockMeta)
 	{
 		if (a_BlockMeta & 0x4)  // upside down
 		{
@@ -127,19 +72,19 @@ public:
 		}
 		else if ((a_BlockMeta & 0x3) == 0)  // tall side is east (+X)
 		{
-			return a_Position.y < ((a_Position.x > 0.5) ? 1.0 : 0.5);
+			return (a_RelPosition.y < ((a_RelPosition.x > 0.5) ? 1.0 : 0.5));
 		}
 		else if ((a_BlockMeta & 0x3) == 1)  // tall side is west (-X)
 		{
-			return a_Position.y < ((a_Position.x < 0.5) ? 1.0 : 0.5);
+			return (a_RelPosition.y < ((a_RelPosition.x < 0.5) ? 1.0 : 0.5));
 		}
 		else if ((a_BlockMeta & 0x3) == 2)  // tall side is south (+Z)
 		{
-			return a_Position.y < ((a_Position.z > 0.5) ? 1.0 : 0.5);
+			return (a_RelPosition.y < ((a_RelPosition.z > 0.5) ? 1.0 : 0.5));
 		}
 		else if ((a_BlockMeta & 0x3) == 3)  // tall side is north (-Z)
 		{
-			return a_Position.y < ((a_Position.z < 0.5) ? 1.0 : 0.5);
+			return (a_RelPosition.y < ((a_RelPosition.z < 0.5) ? 1.0 : 0.5));
 		}
 		return false;
 	}

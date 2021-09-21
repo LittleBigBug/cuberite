@@ -30,16 +30,11 @@ stays valid but doesn't call into Lua code anymore, returning false for "failure
 
 #pragma once
 
-extern "C"
-{
-	#include "lua/src/lauxlib.h"
-}
-
-
-#include <functional>
+#include "lua/src/lauxlib.h"
 
 #include "../Defines.h"
 #include "../FunctionRef.h"
+#include "../Registries/CustomStatistics.h"
 #include "PluginManager.h"
 #include "LuaState_Typedefs.inc"
 
@@ -58,7 +53,7 @@ class cLuaState
 {
 public:
 
-	#ifdef _DEBUG
+	#ifndef NDEBUG
 		/** Asserts that the Lua stack has the same amount of entries when this object is destructed, as when it was constructed.
 		Used for checking functions that should preserve Lua stack balance. */
 		class cStackBalanceCheck
@@ -78,7 +73,7 @@ public:
 				}
 			}
 
-			~cStackBalanceCheck() CAN_THROW
+			~cStackBalanceCheck() noexcept(false)
 			{
 				auto currStackPos = lua_gettop(m_LuaState);
 				if (currStackPos != m_StackPos)
@@ -118,7 +113,7 @@ public:
 		{
 		}
 
-		~cStackBalancePopper() CAN_THROW
+		~cStackBalancePopper() noexcept(false)
 		{
 			auto curTop = lua_gettop(m_LuaState);
 			if (curTop > m_Count)
@@ -285,7 +280,7 @@ public:
 	class cCallback:
 		public cTrackedRef
 	{
-		typedef cTrackedRef Super;
+		using Super = cTrackedRef;
 
 	public:
 
@@ -334,7 +329,7 @@ public:
 	class cOptionalCallback:
 		public cCallback
 	{
-		typedef cCallback Super;
+		using Super = cCallback;
 
 	public:
 
@@ -369,7 +364,8 @@ public:
 	class cTableRef:
 		public cTrackedRef
 	{
-		typedef cTrackedRef Super;
+		using Super = cTrackedRef;
+
 	public:
 		cTableRef(void) {}
 
@@ -477,7 +473,7 @@ public:
 			std::swap(m_StackLen, a_Src.m_StackLen);
 		}
 
-		~cStackValue() CAN_THROW
+		~cStackValue() noexcept(false)
 		{
 			if (m_LuaState != nullptr)
 			{
@@ -618,6 +614,7 @@ public:
 	void Push(const cItem & a_Item);
 	void Push(const cNil & a_Nil);
 	void Push(const cRef & a_Ref);
+	void Push(ContiguousByteBufferView a_Data);
 	void Push(const Vector3d & a_Vector);
 	void Push(const Vector3i & a_Vector);
 
@@ -657,17 +654,19 @@ public:
 	bool GetStackValue(int a_StackPos, cTrackedRef & a_Ref);
 	bool GetStackValue(int a_StackPos, cTrackedRefPtr & a_Ref);
 	bool GetStackValue(int a_StackPos, cTrackedRefSharedPtr & a_Ref);
+	bool GetStackValue(int a_StackPos, ContiguousByteBuffer & a_Data);
+	bool GetStackValue(int a_StackPos, CustomStatistic & a_Value);
 	bool GetStackValue(int a_StackPos, double & a_Value);
 	bool GetStackValue(int a_StackPos, eBlockFace & a_Value);
 	bool GetStackValue(int a_StackPos, eWeather & a_Value);
 	bool GetStackValue(int a_StackPos, float & a_ReturnedVal);
 	bool GetStackValue(int a_StackPos, cUUID & a_Value);
+	bool GetStackValue(int a_StackPos, std::string_view & a_Value);
 
 	// template to catch all of the various c++ integral types without overload conflicts
-	template <class T>
-	bool GetStackValue(int a_StackPos, T & a_ReturnedVal, typename std::enable_if<std::is_integral<T>::value>::type * unused = nullptr)
+	template <class T, typename = std::enable_if_t<std::is_integral_v<T>>>
+	bool GetStackValue(int a_StackPos, T & a_ReturnedVal)
 	{
-		UNUSED(unused);
 		if (!lua_isnumber(m_LuaState, a_StackPos))  // Also accepts strings representing a number: https://pgl.yoyo.org/luai/i/lua_isnumber
 		{
 			return false;
@@ -695,6 +694,10 @@ public:
 		}
 		return GetStackValue(a_StackPos, a_ReturnedVal.GetDest());
 	}
+
+	/** Retrieves any Vector3 value and coerces it into a Vector3<T>. */
+	template <typename T>
+	bool GetStackValue(int a_StackPos, Vector3<T> & a_ReturnedVal);
 
 	/** Pushes the named value in the table at the top of the stack.
 	a_Name may be a path containing multiple table levels, such as "cChatColor.Blue".
@@ -794,6 +797,10 @@ public:
 	Accepts either cUUID instances or strings that contain UUIDs */
 	bool CheckParamUUID(int a_StartParam, int a_EndParam = -1);
 
+	/** Returns true if the specified parameters on the stack are Vector3s; also logs warning if not.
+	Accepts any Vector3 type instances or tables. */
+	bool CheckParamVector3(int a_StartParam, int a_EndParam = -1);
+
 	/** Returns true if the specified parameter on the stack is nil (indicating an end-of-parameters) */
 	bool CheckParamEnd(int a_Param);
 
@@ -805,9 +812,14 @@ public:
 	Returns false and logs a special warning ("wrong calling convention") if not. */
 	bool CheckParamStaticSelf(const char * a_SelfClassName);
 
-	bool IsParamUserType(int a_Param, AString a_UserType);
+	/** Returns true if the specified parameter is of the specified class. */
+	bool IsParamUserType(int a_ParamIdx, const AString & a_UserType);
 
-	bool IsParamNumber(int a_Param);
+	/** Returns true if the specified parameter is a number. */
+	bool IsParamNumber(int a_ParamIdx);
+
+	/** Returns true if the specified parameter is any of the Vector3 types. */
+	bool IsParamVector3(int a_ParamIdx);
 
 	/** If the status is nonzero, prints the text on the top of Lua stack and returns true */
 	bool ReportErrors(int status);
@@ -824,7 +836,7 @@ public:
 	/** Prints the message, prefixed with the current function name, then logs the stack contents and raises a Lua error.
 	To be used for bindings when they detect bad parameters.
 	Doesn't return, but a dummy return type is provided so that Lua API functions may do "return ApiParamError(...)". */
-	int ApiParamError(fmt::StringRef a_Msg);
+	int ApiParamError(std::string_view a_Msg);
 
 	/** Formats and prints the message using printf-style format specifiers, but prefixed with the current function name, then logs the stack contents and raises a Lua error.
 	To be used for bindings when they detect bad parameters.
@@ -1027,7 +1039,12 @@ protected:
 	/** Removes the specified reference from tracking.
 	The reference will no longer be invalidated when this Lua state is about to be closed. */
 	void UntrackRef(cTrackedRef & a_Ref);
-} ;
+};  // cLuaState
+
+// Instantiate the GetStackValue(Vector3<>) function for all Vector3 types:
+extern template bool cLuaState::GetStackValue(int a_StackPos, Vector3d & a_ReturnedVal);
+extern template bool cLuaState::GetStackValue(int a_StackPos, Vector3f & a_ReturnedVal);
+extern template bool cLuaState::GetStackValue(int a_StackPos, Vector3i & a_ReturnedVal);
 
 
 

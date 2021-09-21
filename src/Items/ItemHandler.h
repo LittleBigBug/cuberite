@@ -9,6 +9,7 @@
 
 
 // fwd:
+class cChunk;
 class cWorld;
 class cPlayer;
 class cBlockPluginInterface;
@@ -36,58 +37,30 @@ public:
 	/** Force virtual destructor */
 	virtual ~cItemHandler() {}
 
-
 	/** Called when the player tries to place the item (right mouse button, IsPlaceable() == true).
-	The block coords are for the block that has been clicked.
+	a_ClickedBlockPos is the (neighbor) block that has been clicked to place this item.
+	a_ClickedBlockFace is the face of the neighbor that has been clicked to place this item.
+	a_CursorPos is the position of the player's cursor within a_ClickedBlockFace.
 	The default handler uses GetBlocksToPlace() and places the returned blocks.
 	Override if the item needs advanced processing, such as spawning a mob based on the blocks being placed.
-	If the block placement is refused inside this call, it will automatically revert the client-side changes.
-	Returns true if the placement succeeded, false if the placement was aborted for any reason. */
-	virtual bool OnPlayerPlace(
-		cWorld & a_World, cPlayer & a_Player, const cItem & a_EquippedItem,
-		int a_BlockX, int a_BlockY, int a_BlockZ, eBlockFace a_BlockFace,
-		int a_CursorX, int a_CursorY, int a_CursorZ
-	);
-
-
-	/** Called from OnPlayerPlace() to determine the blocks that the current placement operation should set.
-	The block coords are where the new (main) block should be placed.
-	The default handler uses GetPlacementBlockTypeMeta() and provides that as the single block at the specified coords.
-	Returns true if the placement succeeded, false if the placement was aborted for any reason.
-	If aborted, the server then sends all original blocks in the coords provided in a_BlocksToSet to the client. */
-	virtual bool GetBlocksToPlace(
-		cWorld & a_World, cPlayer & a_Player, const cItem & a_EquippedItem,
-		int a_BlockX, int a_BlockY, int a_BlockZ, eBlockFace a_BlockFace,
-		int a_CursorX, int a_CursorY, int a_CursorZ,
-		sSetBlockVector & a_BlocksToSet
-	);
-
-
-	/** Called when the player right-clicks with this item and IsPlaceable() == true, and OnPlayerPlace() is not overridden.
-	This function should provide the block type and meta for the placed block, or refuse the placement.
-	Returns true to allow placement, false to refuse. */
-	virtual bool GetPlacementBlockTypeMeta(
-		cWorld * a_World, cPlayer * a_Player,
-		int a_BlockX, int a_BlockY, int a_BlockZ, eBlockFace a_BlockFace,
-		int a_CursorX, int a_CursorY, int a_CursorZ,
-		BLOCKTYPE & a_BlockType, NIBBLETYPE & a_BlockMeta
-	);
-
+	If the block placement is refused inside this call, it will automatically revert the client-side changes. */
+	void OnPlayerPlace(cPlayer & a_Player, const cItem & a_HeldItem, Vector3i a_ClickedBlockPosition, eBlockFace a_ClickedBlockFace, Vector3i a_CursorPosition);
 
 	/** Called when the player tries to use the item (right mouse button).
-	Return false to abort the usage. DEFAULT: False */
+	Descendants can return false to abort the usage (default behavior). */
 	virtual bool OnItemUse(
-		cWorld * a_World, cPlayer * a_Player, cBlockPluginInterface & a_PluginInterface, const cItem & a_Item,
-		int a_BlockX, int a_BlockY, int a_BlockZ, eBlockFace a_BlockFace
+		cWorld * a_World,
+		cPlayer * a_Player,
+		cBlockPluginInterface & a_PluginInterface,
+		const cItem & a_HeldItem,
+		const Vector3i a_ClickedBlockPos,
+		eBlockFace a_ClickedBlockFace
 	);
 
-
-	/** Called when the client sends the SHOOT status in the lclk packet */
-	virtual void OnItemShoot(cPlayer *, int a_BlockX, int a_BlockY, int a_BlockZ, eBlockFace a_BlockFace)
+	/** Called when the client sends the SHOOT status in the lclk packet (releasing the bow). */
+	virtual void OnItemShoot(cPlayer *, const Vector3i a_BlockPos, eBlockFace a_BlockFace)
 	{
-		UNUSED(a_BlockX);
-		UNUSED(a_BlockY);
-		UNUSED(a_BlockZ);
+		UNUSED(a_BlockPos);
 		UNUSED(a_BlockFace);
 	}
 
@@ -100,9 +73,13 @@ public:
 	}
 
 	/** Called while the player digs a block using this item */
-	virtual bool OnDiggingBlock(cWorld * a_World, cPlayer * a_Player, const cItem & a_HeldItem, int a_BlockX, int a_BlockY, int a_BlockZ, eBlockFace a_BlockFace);
+	virtual bool OnDiggingBlock(
+		cWorld * a_World, cPlayer * a_Player, const cItem & a_HeldItem,
+		const Vector3i a_ClickedBlockPos,
+		eBlockFace a_ClickedBlockFace
+	);
 
-	/** Called when a player attacks a other entity. */
+	/** Called when a player attacks an entity with this item in hand. */
 	virtual void OnEntityAttack(cPlayer * a_Attacker, cEntity * a_AttackedEntity);
 
 	/** Called after the player has eaten this item. */
@@ -163,8 +140,15 @@ public:
 	static void Deinit();
 
 protected:
+
 	int m_ItemType;
 	static cItemHandler * CreateItemHandler(int m_ItemType);
+
+	/** Performs the actual placement of this placeable item.
+	The descendant handler should call a_Player.PlaceBlock(s) supplying correct values for the newly placed block.
+	The default handler uses the stored block type and meta copied from the lowest 4 bits of the player's equipped item's damage value.
+	Handlers return what a_Player.PlaceBlock(s) returns, indicating whether the placement was successful. */
+	virtual bool CommitPlacement(cPlayer & a_Player, const cItem & a_HeldItem, Vector3i a_PlacePosition, eBlockFace a_ClickedBlockFace, Vector3i a_CursorPosition);
 
 	static cItemHandler * m_ItemHandler[E_ITEM_LAST + 1];
 	static bool m_HandlerInitialized;  // used to detect if the itemhandlers are initialized

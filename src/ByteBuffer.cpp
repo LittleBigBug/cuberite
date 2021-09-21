@@ -83,7 +83,7 @@ Unfortunately it is very slow, so it is disabled even for regular DEBUG builds. 
 // cByteBuffer:
 
 cByteBuffer::cByteBuffer(size_t a_BufferSize) :
-	m_Buffer(new char[a_BufferSize + 1]),
+	m_Buffer(new std::byte[a_BufferSize + 1]),
 	m_BufferSize(a_BufferSize + 1),
 	m_DataStart(0),
 	m_WritePos(0),
@@ -115,7 +115,7 @@ bool cByteBuffer::Write(const void * a_Bytes, size_t a_Count)
 
 	// Store the current free space for a check after writing:
 	size_t CurFreeSpace = GetFreeSpace();
-	#ifdef _DEBUG
+	#ifndef NDEBUG
 		size_t CurReadableSpace = GetReadableSpace();
 	#endif
 	size_t WrittenBytes = 0;
@@ -446,7 +446,15 @@ bool cByteBuffer::ReadVarUTF8String(AString & a_Value)
 	{
 		LOGWARNING("%s: String too large: %u (%u KiB)", __FUNCTION__, Size, Size / 1024);
 	}
-	return ReadString(a_Value, static_cast<size_t>(Size));
+	ContiguousByteBuffer Buffer;
+	if (!ReadSome(Buffer, static_cast<size_t>(Size)))
+	{
+		return false;
+	}
+	// "Convert" a UTF-8 encoded string into system-native char.
+	// This isn't great, better would be to use codecvt:
+	a_Value = { reinterpret_cast<const char *>(Buffer.data()), Buffer.size() };
+	return true;
 }
 
 
@@ -472,7 +480,7 @@ bool cByteBuffer::ReadLEInt(int & a_Value)
 
 
 
-bool cByteBuffer::ReadPosition64(int & a_BlockX, int & a_BlockY, int & a_BlockZ)
+bool cByteBuffer::ReadXYZPosition64(int & a_BlockX, int & a_BlockY, int & a_BlockZ)
 {
 	CHECK_THREAD
 	Int64 Value;
@@ -488,8 +496,33 @@ bool cByteBuffer::ReadPosition64(int & a_BlockX, int & a_BlockY, int & a_BlockZ)
 
 	// If the highest bit in the number's range is set, convert the number into negative:
 	a_BlockX = ((BlockXRaw & 0x02000000) == 0) ? static_cast<int>(BlockXRaw) : -(0x04000000 - static_cast<int>(BlockXRaw));
-	a_BlockY = ((BlockYRaw & 0x0800) == 0)     ? static_cast<int>(BlockYRaw) : -(0x0800     - static_cast<int>(BlockYRaw));
+	a_BlockY = ((BlockYRaw & 0x0800) == 0)     ? static_cast<int>(BlockYRaw) : -(0x01000    - static_cast<int>(BlockYRaw));
 	a_BlockZ = ((BlockZRaw & 0x02000000) == 0) ? static_cast<int>(BlockZRaw) : -(0x04000000 - static_cast<int>(BlockZRaw));
+	return true;
+}
+
+
+
+
+
+bool cByteBuffer::ReadXZYPosition64(int & a_BlockX, int & a_BlockY, int & a_BlockZ)
+{
+	CHECK_THREAD
+	Int64 Value;
+	if (!ReadBEInt64(Value))
+	{
+		return false;
+	}
+
+	// Convert the 64 received bits into 3 coords:
+	UInt32 BlockXRaw = (Value >> 38) & 0x03ffffff;  // Top 26 bits
+	UInt32 BlockZRaw = (Value >> 12) & 0x03ffffff;  // Middle 26 bits
+	UInt32 BlockYRaw = (Value & 0x0fff);            // Bottom 12 bits
+
+	// If the highest bit in the number's range is set, convert the number into negative:
+	a_BlockX = ((BlockXRaw & 0x02000000) == 0) ? static_cast<int>(BlockXRaw) : (static_cast<int>(BlockXRaw) - 0x04000000);
+	a_BlockY = ((BlockYRaw & 0x0800)     == 0) ? static_cast<int>(BlockYRaw) : (static_cast<int>(BlockYRaw) - 0x01000);
+	a_BlockZ = ((BlockZRaw & 0x02000000) == 0) ? static_cast<int>(BlockZRaw) : (static_cast<int>(BlockZRaw) - 0x04000000);
 	return true;
 }
 
@@ -516,6 +549,18 @@ bool cByteBuffer::ReadUUID(cUUID & a_Value)
 
 
 bool cByteBuffer::WriteBEInt8(Int8 a_Value)
+{
+	CHECK_THREAD
+	CheckValid();
+	PUTBYTES(1);
+	return WriteBuf(&a_Value, 1);
+}
+
+
+
+
+
+bool cByteBuffer::WriteBEInt8(const std::byte a_Value)
 {
 	CHECK_THREAD
 	CheckValid();
@@ -718,7 +763,7 @@ bool cByteBuffer::WriteVarUTF8String(const AString & a_Value)
 
 
 
-bool cByteBuffer::WritePosition64(Int32 a_BlockX, Int32 a_BlockY, Int32 a_BlockZ)
+bool cByteBuffer::WriteXYZPosition64(Int32 a_BlockX, Int32 a_BlockY, Int32 a_BlockZ)
 {
 	CHECK_THREAD
 	CheckValid();
@@ -726,6 +771,21 @@ bool cByteBuffer::WritePosition64(Int32 a_BlockX, Int32 a_BlockY, Int32 a_BlockZ
 		(static_cast<Int64>(a_BlockX & 0x3FFFFFF) << 38) |
 		(static_cast<Int64>(a_BlockY & 0xFFF) << 26) |
 		(static_cast<Int64>(a_BlockZ & 0x3FFFFFF))
+	);
+}
+
+
+
+
+
+bool cByteBuffer::WriteXZYPosition64(Int32 a_BlockX, Int32 a_BlockY, Int32 a_BlockZ)
+{
+	CHECK_THREAD
+	CheckValid();
+	return WriteBEInt64(
+		(static_cast<Int64>(a_BlockX & 0x3FFFFFF) << 38) |
+		(static_cast<Int64>(a_BlockZ & 0x3FFFFFF) << 26) |
+		(static_cast<Int64>(a_BlockY & 0xFFF))
 	);
 }
 
@@ -796,7 +856,35 @@ bool cByteBuffer::WriteBuf(const void * a_Buffer, size_t a_Count)
 
 
 
-bool cByteBuffer::ReadString(AString & a_String, size_t a_Count)
+bool cByteBuffer::WriteBuf(size_t a_Count, unsigned char a_Value)
+{
+	CHECK_THREAD
+	CheckValid();
+	PUTBYTES(a_Count);
+	ASSERT(m_BufferSize >= m_ReadPos);
+	size_t BytesToEndOfBuffer = m_BufferSize - m_WritePos;
+	if (BytesToEndOfBuffer <= a_Count)
+	{
+		// Reading across the ringbuffer end, read the first part and adjust parameters:
+		memset(m_Buffer + m_WritePos, a_Value, BytesToEndOfBuffer);
+		a_Count -= BytesToEndOfBuffer;
+		m_WritePos = 0;
+	}
+
+	// Read the rest of the bytes in a single read (guaranteed to fit):
+	if (a_Count > 0)
+	{
+		memset(m_Buffer + m_WritePos, a_Value, a_Count);
+		m_WritePos += a_Count;
+	}
+	return true;
+}
+
+
+
+
+
+bool cByteBuffer::ReadSome(ContiguousByteBuffer & a_String, size_t a_Count)
 {
 	CHECK_THREAD
 	CheckValid();
@@ -846,11 +934,11 @@ bool cByteBuffer::SkipRead(size_t a_Count)
 
 
 
-void cByteBuffer::ReadAll(AString & a_Data)
+void cByteBuffer::ReadAll(ContiguousByteBuffer & a_Data)
 {
 	CHECK_THREAD
 	CheckValid();
-	ReadString(a_Data, GetReadableSpace());
+	ReadSome(a_Data, GetReadableSpace());
 }
 
 
@@ -904,7 +992,7 @@ void cByteBuffer::ResetRead(void)
 
 
 
-void cByteBuffer::ReadAgain(AString & a_Out)
+void cByteBuffer::ReadAgain(ContiguousByteBuffer & a_Out)
 {
 	// Return the data between m_DataStart and m_ReadPos (the data that has been read but not committed)
 	// Used by ProtoProxy to repeat communication twice, once for parsing and the other time for the remote party
@@ -964,8 +1052,3 @@ size_t cByteBuffer::GetVarIntSize(UInt32 a_Value)
 
 	return Count;
 }
-
-
-
-
-

@@ -2,6 +2,7 @@
 #pragma once
 
 
+#include "../BlockType.h"
 #include "../Defines.h"
 #include "../FunctionRef.h"
 
@@ -17,6 +18,7 @@ class cClientHandle;
 class cCommandOutputCallback;
 class cCraftingGrid;
 class cCraftingRecipe;
+class cDropSpenserEntity;
 class cEntity;
 class cHopperEntity;
 class cItems;
@@ -100,6 +102,7 @@ public:
 		HOOK_HANDSHAKE,
 		HOOK_HOPPER_PULLING_ITEM,
 		HOOK_HOPPER_PUSHING_ITEM,
+		HOOK_DROPSPENSE,
 		HOOK_KILLED,
 		HOOK_KILLING,
 		HOOK_LOGIN,
@@ -158,6 +161,14 @@ public:
 		HOOK_NUM_HOOKS,
 		HOOK_MAX = HOOK_NUM_HOOKS - 1,
 	} ;  // tolua_export
+
+
+	/** Defines the deferred actions needed for a plugin */
+	enum class PluginAction
+	{
+		Reload,
+		Unload
+	};
 
 
 	/** Used as a callback for enumerating bound commands */
@@ -249,7 +260,8 @@ public:
 	bool CallHookHandshake                (cClientHandle & a_ClientHandle, const AString & a_Username);
 	bool CallHookHopperPullingItem        (cWorld & a_World, cHopperEntity & a_Hopper, int a_DstSlotNum, cBlockEntityWithItems & a_SrcEntity, int a_SrcSlotNum);
 	bool CallHookHopperPushingItem        (cWorld & a_World, cHopperEntity & a_Hopper, int a_SrcSlotNum, cBlockEntityWithItems & a_DstEntity, int a_DstSlotNum);
-	bool CallHookKilled		      (cEntity & a_Victim, TakeDamageInfo & a_TDI, AString & a_DeathMessage);
+	bool CallHookDropSpense               (cWorld & a_World, cDropSpenserEntity & a_DropSpenser, int a_SlotNum);
+	bool CallHookKilled                   (cEntity & a_Victim, TakeDamageInfo & a_TDI, AString & a_DeathMessage);
 	bool CallHookKilling                  (cEntity & a_Victim, cEntity * a_Killer, TakeDamageInfo & a_TDI);
 	bool CallHookLogin                    (cClientHandle & a_Client, UInt32 a_ProtocolVersion, const AString & a_Username);
 	bool CallHookLoginForge               (cClientHandle & a_Client, AStringMap & a_Mods);
@@ -278,7 +290,7 @@ public:
 	bool CallHookPlayerUsedItem           (cPlayer & a_Player, int a_BlockX, int a_BlockY, int a_BlockZ, char a_BlockFace, int a_CursorX, int a_CursorY, int a_CursorZ);
 	bool CallHookPlayerUsingBlock         (cPlayer & a_Player, int a_BlockX, int a_BlockY, int a_BlockZ, char a_BlockFace, int a_CursorX, int a_CursorY, int a_CursorZ, BLOCKTYPE a_BlockType, NIBBLETYPE a_BlockMeta);
 	bool CallHookPlayerUsingItem          (cPlayer & a_Player, int a_BlockX, int a_BlockY, int a_BlockZ, char a_BlockFace, int a_CursorX, int a_CursorY, int a_CursorZ);
-	bool CallHookPluginMessage            (cClientHandle & a_Client, const AString & a_Channel, const AString & a_Message);
+	bool CallHookPluginMessage            (cClientHandle & a_Client, const AString & a_Channel, ContiguousByteBufferView a_Message);
 	bool CallHookPluginsLoaded            (void);
 	bool CallHookPostCrafting             (cPlayer & a_Player, cCraftingGrid & a_Grid, cCraftingRecipe & a_Recipe);
 	bool CallHookPreCrafting              (cPlayer & a_Player, cCraftingGrid & a_Grid, cCraftingRecipe & a_Recipe);
@@ -300,6 +312,10 @@ public:
 	/** Queues the specified plugin to be unloaded in the next call to Tick().
 	Note that this function returns before the plugin is unloaded, to avoid deadlocks. */
 	void UnloadPlugin(const AString & a_PluginFolder);  // tolua_export
+
+	/** Queues the specified plugin to be reloaded in the next call to Tick().
+	Note that this function returns before the plugin is unloaded, to avoid deadlocks. */
+	void ReloadPlugin(const AString & a_PluginFolder);  // tolua_export
 
 	/** Loads the plugin from the specified plugin folder.
 	Returns true if the plugin was loaded successfully or was already loaded before, false otherwise. */
@@ -388,7 +404,7 @@ public:
 
 	/** Returns the path where individual plugins' folders are expected.
 	The path doesn't end in a slash. */
-	static AString GetPluginsPath(void) { return FILE_IO_PREFIX "Plugins"; }  // tolua_export
+	static AString GetPluginsPath(void) { return "Plugins"; }  // tolua_export
 
 private:
 	friend class cRoot;
@@ -406,13 +422,13 @@ private:
 	typedef std::map<AString, cCommandReg> CommandMap;
 
 
-	/** FolderNames of plugins that should be unloaded.
-	The plugins will be unloaded within the next call to Tick(), to avoid multithreading issues.
-	Protected against multithreaded access by m_CSPluginsToUnload. */
-	AStringVector m_PluginsToUnload;
+	/** FolderNames of plugins that need an action (unload, reload, ...).
+	The plugins will be acted upon within the next call to Tick(), to avoid multithreading issues.
+	Protected against multithreaded access by m_CSPluginsNeedAction. */
+	std::vector<std::pair<PluginAction, AString>> m_PluginsNeedAction;
 
 	/** Protects m_PluginsToUnload against multithreaded access. */
-	mutable cCriticalSection m_CSPluginsToUnload;
+	mutable cCriticalSection m_CSPluginsNeedAction;
 
 	/** All plugins that have been found in the Plugins folder. */
 	cPluginPtrs m_Plugins;
@@ -455,3 +471,5 @@ private:
 	template <typename HookFunction>
 	bool GenericCallHook(PluginHook a_HookName, HookFunction a_HookFunction);
 } ;  // tolua_export
+
+

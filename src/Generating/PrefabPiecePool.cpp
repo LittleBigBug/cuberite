@@ -78,15 +78,6 @@ cPrefabPiecePool::cPrefabPiecePool(
 
 
 
-cPrefabPiecePool::cPrefabPiecePool(const AString & a_FileName, bool a_LogWarnings)
-{
-	LoadFromFile(a_FileName, a_LogWarnings);
-}
-
-
-
-
-
 cPrefabPiecePool::~cPrefabPiecePool()
 {
 	Clear();
@@ -174,21 +165,28 @@ bool cPrefabPiecePool::LoadFromString(const AString & a_Contents, const AString 
 	// If the contents start with GZip signature, ungzip and retry:
 	if (a_Contents.substr(0, 3) == "\x1f\x8b\x08")
 	{
-		AString Uncompressed;
-		auto res = UncompressStringGZIP(a_Contents.data(), a_Contents.size(), Uncompressed);
-		if (res == Z_OK)
+		try
 		{
-			return LoadFromString(Uncompressed, a_FileName, a_LogWarnings);
+			const auto Extracted = Compression::Extractor().ExtractGZip(
+			{
+				reinterpret_cast<const std::byte *>(a_Contents.data()), a_Contents.size()
+			});
+
+			// Here we do an extra std::string conversion, hardly efficient, but...
+			// Better would be refactor into LoadFromByteView for the GZip decompression path, and getting cFile to support std::byte.
+			// ...so it'll do for now.
+
+			return LoadFromString(std::string(Extracted.GetStringView()), a_FileName, a_LogWarnings);
 		}
-		else
+		catch (const std::exception & Oops)
 		{
-			CONDWARNING(a_LogWarnings, "Failed to decompress Gzip data in file %s: %d", a_FileName.c_str(), res);
+			CONDWARNING(a_LogWarnings, "Failed to decompress Gzip data in file %s. %s", a_FileName.c_str(), Oops.what());
 			return false;
 		}
 	}
 
 	// Search the first 8 KiB of the file for the format auto-detection string:
-	auto Header = a_Contents.substr(0, 8192);
+	const auto Header = a_Contents.substr(0, 8 KiB);
 	if (Header.find("CubesetFormatVersion =") != AString::npos)
 	{
 		return LoadFromCubeset(a_Contents, a_FileName, a_LogWarnings);
@@ -391,14 +389,18 @@ std::unique_ptr<cPrefab> cPrefabPiecePool::LoadPrefabFromCubesetVer1(
 			SchematicFileName = a_FileName.substr(0, PathEnd) + SchematicFileName;
 		}
 		cBlockArea area;
-		if (!cSchematicFileSerializer::LoadFromSchematicFile(area, SchematicFileName))
+		try
 		{
-			CONDWARNING(a_LogWarnings, "Cannot load schematic file \"%s\" for piece %s in cubeset %s.",
-				SchematicFileName.c_str(), a_PieceName.c_str(), a_FileName.c_str()
+			cSchematicFileSerializer::LoadFromSchematicFile(area, SchematicFileName);
+		}
+		catch (const std::exception & Oops)
+		{
+			CONDWARNING(a_LogWarnings, "Cannot load schematic file \"%s\" for piece %s in cubeset %s. %s",
+				SchematicFileName.c_str(), a_PieceName.c_str(), a_FileName.c_str(), Oops.what()
 			);
 			return nullptr;
 		}
-		return cpp14::make_unique<cPrefab>(area);
+		return std::make_unique<cPrefab>(area);
 	}  // if (SchematicFileName)
 
 	// There's no referenced schematic file, load from BlockDefinitions / BlockData.
@@ -452,7 +454,7 @@ std::unique_ptr<cPrefab> cPrefabPiecePool::LoadPrefabFromCubesetVer1(
 		return nullptr;
 	}
 
-	return cpp14::make_unique<cPrefab>(BlockDefStr, BlockDataStr, SizeX, SizeY, SizeZ);
+	return std::make_unique<cPrefab>(BlockDefStr, BlockDataStr, SizeX, SizeY, SizeZ);
 }
 
 
@@ -613,6 +615,12 @@ bool cPrefabPiecePool::ReadPieceMetadataCubesetVer1(
 	}
 	a_Prefab->SetVerticalStrategyFromString(VerticalStrategy, a_LogWarnings);
 
+	AString ModifiersStr;
+	if (a_LuaState.GetNamedValue("Modifiers", ModifiersStr))
+	{
+		a_Prefab->SetPieceModifiersFromString(ModifiersStr, a_LogWarnings);
+	}
+
 	return true;
 }
 
@@ -722,7 +730,7 @@ AString cPrefabPiecePool::GetMetadata(const AString & a_ParamName) const
 
 
 
-void cPrefabPiecePool::AssignGens(int a_Seed, cBiomeGenPtr & a_BiomeGen, cTerrainHeightGenPtr & a_HeightGen, int a_SeaLevel)
+void cPrefabPiecePool::AssignGens(int a_Seed, cBiomeGen & a_BiomeGen, cTerrainHeightGen & a_HeightGen, int a_SeaLevel)
 {
 	// Assign the generator linkage to all starting pieces' VerticalStrategies:
 	for (auto & piece: m_StartingPieces)
@@ -741,6 +749,14 @@ void cPrefabPiecePool::AssignGens(int a_Seed, cBiomeGenPtr & a_BiomeGen, cTerrai
 		if (verticalLimit != nullptr)
 		{
 			verticalLimit->AssignGens(a_Seed, a_BiomeGen, a_HeightGen, a_SeaLevel);
+		}
+		auto modifiers = piece->GetModifiers();
+		if (modifiers.size() > 0)
+		{
+			for (size_t i = 0; i < modifiers.size(); i++)
+			{
+				modifiers[i]->AssignSeed(a_Seed);
+			}
 		}
 	}  // for piece - m_AllPieces[]
 }
@@ -806,7 +822,3 @@ void cPrefabPiecePool::Reset(void)
 {
 	// Do nothing
 }
-
-
-
-

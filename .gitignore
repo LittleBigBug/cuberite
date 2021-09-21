@@ -14,6 +14,7 @@ Tools/ProtoProxy/ProtoProxy
 Testing/
 ChunkWorxSave.ini
 doxy/
+.vscode/
 Profiling
 Symbols
 cloc-ignored.txt
@@ -106,7 +107,7 @@ ReleaseProfile/
 *.dir/
 CPackConfig.cmake
 CPackSourceConfig.cmake
-cmake-build-debug
+cmake-build-*
 
 # APIDump-generated status files:
 Server/cuberite_api.lua

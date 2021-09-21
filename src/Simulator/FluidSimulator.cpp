@@ -8,7 +8,7 @@
 
 
 cFluidSimulator::cFluidSimulator(cWorld & a_World, BLOCKTYPE a_Fluid, BLOCKTYPE a_StationaryFluid) :
-	super(a_World),
+	Super(a_World),
 	m_FluidBlock(a_Fluid),
 	m_StationaryFluidBlock(a_StationaryFluid)
 {
@@ -37,12 +37,14 @@ bool cFluidSimulator::CanWashAway(BLOCKTYPE a_BlockType)
 		case E_BLOCK_BIG_FLOWER:
 		case E_BLOCK_BROWN_MUSHROOM:
 		case E_BLOCK_CACTUS:
+		case E_BLOCK_CARROTS:
 		case E_BLOCK_COBWEB:
 		case E_BLOCK_CROPS:
 		case E_BLOCK_DEAD_BUSH:
 		case E_BLOCK_DETECTOR_RAIL:
 		case E_BLOCK_INACTIVE_COMPARATOR:
 		case E_BLOCK_LILY_PAD:
+		case E_BLOCK_POTATOES:
 		case E_BLOCK_POWERED_RAIL:
 		case E_BLOCK_RAIL:
 		case E_BLOCK_REDSTONE_REPEATER_OFF:
@@ -56,8 +58,8 @@ bool cFluidSimulator::CanWashAway(BLOCKTYPE a_BlockType)
 		case E_BLOCK_SUGARCANE:
 		case E_BLOCK_TALL_GRASS:
 		case E_BLOCK_TORCH:
-		case E_BLOCK_TRIPWIRE_HOOK:
 		case E_BLOCK_TRIPWIRE:
+		case E_BLOCK_TRIPWIRE_HOOK:
 		case E_BLOCK_YELLOW_FLOWER:
 		{
 			return true;
@@ -135,7 +137,7 @@ Vector3f cFluidSimulator::GetFlowingDirection(int a_X, int a_Y, int a_Z)
 		return {};
 	}
 
-	if (!IsAllowedBlock(m_World.GetBlock(a_X, a_Y, a_Z)))  // No Fluid -> No Flowing direction :D
+	if (!IsAllowedBlock(m_World.GetBlock({ a_X, a_Y, a_Z })))  // No Fluid -> No Flowing direction :D
 	{
 		return {};
 	}
@@ -146,7 +148,7 @@ Vector3f cFluidSimulator::GetFlowingDirection(int a_X, int a_Y, int a_Z)
 			return ((a_BlockMeta & 0x08) != 0) ? 0 : a_BlockMeta;
 		};
 
-	auto BlockMeta = m_World.GetBlockMeta(a_X, a_Y, a_Z);
+	auto BlockMeta = m_World.GetBlockMeta({ a_X, a_Y, a_Z });
 	NIBBLETYPE CentralPoint = HeightFromMeta(BlockMeta);
 	NIBBLETYPE LevelPoint[4];
 

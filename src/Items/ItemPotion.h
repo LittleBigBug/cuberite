@@ -7,14 +7,17 @@
 class cItemPotionHandler:
 	public cItemHandler
 {
-	typedef cItemHandler super;
+	using Super = cItemHandler;
 
 public:
 
 	cItemPotionHandler():
-		super(E_ITEM_POTION)
+		Super(E_ITEM_POTION)
 	{
 	}
+
+
+
 
 
 	// cItemHandler overrides:
@@ -26,12 +29,19 @@ public:
 	}
 
 
+
+
+
 	virtual bool OnItemUse(
-		cWorld * a_World, cPlayer * a_Player, cBlockPluginInterface & a_PluginInterface, const cItem & a_Item,
-		int a_BlockX, int a_BlockY, int a_BlockZ, eBlockFace a_BlockFace
+		cWorld * a_World,
+		cPlayer * a_Player,
+		cBlockPluginInterface & a_PluginInterface,
+		const cItem & a_HeldItem,
+		const Vector3i a_ClickedBlockPos,
+		eBlockFace a_ClickedBlockFace
 	) override
 	{
-		short PotionDamage = a_Item.m_ItemDamage;
+		short PotionDamage = a_HeldItem.m_ItemDamage;
 
 		// Do not throw non-splash potions:
 		if (cEntityEffect::IsPotionDrinkable(PotionDamage))
@@ -59,6 +69,9 @@ public:
 	}
 
 
+
+
+
 	virtual bool EatItem(cPlayer * a_Player, cItem * a_Item) override
 	{
 		short PotionDamage = a_Item->m_ItemDamage;
@@ -77,8 +90,7 @@ public:
 
 		if (!a_Player->IsGameModeCreative())
 		{
-			a_Player->GetInventory().RemoveOneEquippedItem();
-			a_Player->GetInventory().AddItem(cItem(E_ITEM_GLASS_BOTTLE));
+			a_Player->ReplaceOneEquippedItemTossRest(cItem(E_ITEM_GLASS_BOTTLE));
 		}
 		return true;
 	}

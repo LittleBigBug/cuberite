@@ -6,7 +6,7 @@
 
 
 cExpOrb::cExpOrb(Vector3d a_Pos, int a_Reward):
-	super(etExpOrb, a_Pos, 0.98, 0.98),  // TODO: Check size
+	Super(etExpOrb, a_Pos, 0.5f, 0.5f),
 	m_Reward(a_Reward),
 	m_Timer(0)
 {
@@ -22,10 +22,10 @@ cExpOrb::cExpOrb(Vector3d a_Pos, int a_Reward):
 
 void cExpOrb::SpawnOn(cClientHandle & a_Client)
 {
+	Super::SpawnOn(a_Client);
 	a_Client.SendExperienceOrb(*this);
 	m_bDirtyOrientation = false;
 	m_bDirtyHead = false;
-	super::SpawnOn(a_Client);
 }
 
 
@@ -101,7 +101,7 @@ bool cExpOrb::DoTakeDamage(TakeDamageInfo & a_TDI)
 		return true;
 	}
 
-	return super::DoTakeDamage(a_TDI);
+	return Super::DoTakeDamage(a_TDI);
 }
 
 

@@ -59,10 +59,7 @@ public:
 
 			if (Item.m_ItemCount <= 0)
 			{
-				/* Experimental: show animation pickups getting together */
-				auto Diff = (m_Pickup->GetPosition() * 32.0).Floor() - (EntityPos * 32.0).Floor();
-				a_Entity.GetWorld()->BroadcastEntityRelMove(a_Entity, Vector3<char>(Diff));
-				/* End of experimental animation */
+				a_Entity.GetWorld()->BroadcastCollectEntity(a_Entity, *m_Pickup, static_cast<unsigned>(CombineCount));
 				a_Entity.Destroy();
 
 				// Reset the timer
@@ -97,7 +94,7 @@ protected:
 // cPickup:
 
 cPickup::cPickup(Vector3d a_Pos, const cItem & a_Item, bool IsPlayerCreated, Vector3f a_Speed, int a_LifetimeTicks, bool a_CanCombine):
-	super(etPickup, a_Pos, 0.2, 0.2),
+	Super(etPickup, a_Pos, 0.25f, 0.25f),
 	m_Timer(0),
 	m_Item(a_Item),
 	m_bCollected(false),
@@ -118,8 +115,9 @@ cPickup::cPickup(Vector3d a_Pos, const cItem & a_Item, bool IsPlayerCreated, Vec
 
 void cPickup::SpawnOn(cClientHandle & a_Client)
 {
-	a_Client.SendPickupSpawn(*this);
-	super::SpawnOn(a_Client);
+	Super::SpawnOn(a_Client);
+	a_Client.SendSpawnEntity(*this);
+	a_Client.SendEntityMetadata(*this);
 }
 
 
@@ -128,7 +126,7 @@ void cPickup::SpawnOn(cClientHandle & a_Client)
 
 void cPickup::Tick(std::chrono::milliseconds a_Dt, cChunk & a_Chunk)
 {
-	super::Tick(a_Dt, a_Chunk);
+	Super::Tick(a_Dt, a_Chunk);
 	if (!IsTicking())
 	{
 		// The base class tick destroyed us
@@ -205,7 +203,7 @@ bool cPickup::DoTakeDamage(TakeDamageInfo & a_TDI)
 		return true;
 	}
 
-	return super::DoTakeDamage(a_TDI);
+	return Super::DoTakeDamage(a_TDI);
 }
 
 
@@ -245,18 +243,18 @@ bool cPickup::CollectedBy(cPlayer & a_Dest)
 		// Check achievements
 		switch (m_Item.m_ItemType)
 		{
-			case E_BLOCK_LOG:      a_Dest.AwardAchievement(achMineWood); break;
-			case E_ITEM_LEATHER:   a_Dest.AwardAchievement(achKillCow);  break;
-			case E_ITEM_DIAMOND:   a_Dest.AwardAchievement(achDiamonds); break;
-			case E_ITEM_BLAZE_ROD: a_Dest.AwardAchievement(achBlazeRod); break;
+			case E_BLOCK_LOG:      a_Dest.AwardAchievement(CustomStatistic::AchMineWood); break;
+			case E_ITEM_LEATHER:   a_Dest.AwardAchievement(CustomStatistic::AchKillCow);  break;
+			case E_ITEM_DIAMOND:   a_Dest.AwardAchievement(CustomStatistic::AchDiamonds); break;
+			case E_ITEM_BLAZE_ROD: a_Dest.AwardAchievement(CustomStatistic::AchBlazeRod); break;
 			default: break;
 		}
 
 		m_Item.m_ItemCount -= NumAdded;
-		m_World->BroadcastCollectEntity(*this, a_Dest, NumAdded);
+		m_World->BroadcastCollectEntity(*this, a_Dest, static_cast<unsigned>(NumAdded));
 
 		// Also send the "pop" sound effect with a somewhat random pitch (fast-random using EntityID ;)
-		m_World->BroadcastSoundEffect("entity.item.pickup", GetPosition(), 0.5, (0.75f + (static_cast<float>((GetUniqueID() * 23) % 32)) / 64));
+		m_World->BroadcastSoundEffect("entity.item.pickup", GetPosition(), 0.3f, (1.2f + (static_cast<float>((GetUniqueID() * 23) % 32)) / 64));
 		if (m_Item.m_ItemCount <= 0)
 		{
 			// All of the pickup has been collected, schedule the pickup for destroying

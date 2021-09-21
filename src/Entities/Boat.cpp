@@ -5,6 +5,7 @@
 
 #include "Globals.h"
 #include "Boat.h"
+#include "../BlockInfo.h"
 #include "../World.h"
 #include "../ClientHandle.h"
 #include "Player.h"
@@ -13,8 +14,38 @@
 
 
 
+class cBoatCollisionCallback
+{
+public:
+	cBoatCollisionCallback(cBoat * a_Boat, cEntity * a_Attachee) :
+		m_Boat(a_Boat), m_Attachee(a_Attachee)
+	{
+	}
+
+	bool operator()(cEntity & a_Entity)
+	{
+		// Checks if boat is empty and if given entity is a mob
+		if ((m_Attachee == nullptr) && (a_Entity.IsMob()))
+		{
+			// if so attach and return true
+			a_Entity.AttachTo(m_Boat);
+			return true;
+		}
+
+		return false;
+	}
+
+protected:
+	cBoat * m_Boat;
+	cEntity * m_Attachee;
+};
+
+
+
+
+
 cBoat::cBoat(Vector3d a_Pos, eMaterial a_Material) :
-	super(etBoat, a_Pos, 0.98, 0.7),
+	Super(etBoat, a_Pos, 1.375f, 0.5625f),
 	m_LastDamage(0), m_ForwardDirection(0),
 	m_DamageTaken(0.0f), m_Material(a_Material),
 	m_RightPaddleUsed(false), m_LeftPaddleUsed(false)
@@ -32,8 +63,9 @@ cBoat::cBoat(Vector3d a_Pos, eMaterial a_Material) :
 
 void cBoat::SpawnOn(cClientHandle & a_ClientHandle)
 {
-	a_ClientHandle.SendSpawnVehicle(*this, 1);
-	super::SpawnOn(a_ClientHandle);
+	Super::SpawnOn(a_ClientHandle);
+	a_ClientHandle.SendSpawnEntity(*this);
+	a_ClientHandle.SendEntityMetadata(*this);  // Boat colour
 }
 
 
@@ -42,26 +74,21 @@ void cBoat::SpawnOn(cClientHandle & a_ClientHandle)
 
 void cBoat::BroadcastMovementUpdate(const cClientHandle * a_Exclude)
 {
-	// Process packet sending every two ticks
-	if (GetWorld()->GetWorldAge() % 2 != 0)
+	// Cannot use super::BroadcastMovementUpdate here, broadcasting position when not
+	// expected by the client breaks things. See https://github.com/cuberite/cuberite/pull/4488
+
+	// Process packet sending every two ticks:
+	if ((GetWorld()->GetWorldTickAge() % 2_tick) != 0_tick)
 	{
 		return;
 	}
 
 	Vector3i Diff = (GetPosition() * 32.0).Floor() - (m_LastSentPosition * 32.0).Floor();
-
 	if (Diff.HasNonZeroLength())  // Have we moved?
 	{
-		if ((abs(Diff.x) <= 127) && (abs(Diff.y) <= 127) && (abs(Diff.z) <= 127))  // Limitations of a Byte
-		{
-			m_World->BroadcastEntityRelMove(*this, Vector3<Int8>(Diff), a_Exclude);
-		}
-		else
-		{
-			// Too big a movement, do a teleport
-			m_World->BroadcastTeleportEntity(*this, a_Exclude);
-		}
+		m_World->BroadcastEntityPosition(*this, a_Exclude);
 		m_LastSentPosition = GetPosition();
+		m_bDirtyOrientation = false;
 	}
 }
 
@@ -72,12 +99,22 @@ void cBoat::BroadcastMovementUpdate(const cClientHandle * a_Exclude)
 bool cBoat::DoTakeDamage(TakeDamageInfo & TDI)
 {
 	m_LastDamage = 10;
-	if (!super::DoTakeDamage(TDI))
+	if (!Super::DoTakeDamage(TDI))
 	{
 		return false;
 	}
 
 	m_World->BroadcastEntityMetadata(*this);
+
+	if ((TDI.Attacker != nullptr) && (TDI.Attacker->IsPlayer()))
+	{
+		cPlayer * Destroyer = static_cast<cPlayer *>(TDI.Attacker);
+		if (Destroyer->IsGameModeCreative())
+		{
+			Destroy();
+			return true;
+		}
+	}
 
 	if (GetHealth() <= 0)
 	{
@@ -101,7 +138,7 @@ bool cBoat::DoTakeDamage(TakeDamageInfo & TDI)
 
 void cBoat::OnRightClicked(cPlayer & a_Player)
 {
-	super::OnRightClicked(a_Player);
+	Super::OnRightClicked(a_Player);
 
 	if (m_Attachee != nullptr)
 	{
@@ -132,7 +169,7 @@ void cBoat::OnRightClicked(cPlayer & a_Player)
 
 void cBoat::Tick(std::chrono::milliseconds a_Dt, cChunk & a_Chunk)
 {
-	super::Tick(a_Dt, a_Chunk);
+	Super::Tick(a_Dt, a_Chunk);
 	if (!IsTicking())
 	{
 		// The base class tick destroyed us
@@ -147,7 +184,7 @@ void cBoat::Tick(std::chrono::milliseconds a_Dt, cChunk & a_Chunk)
 		return;
 	}
 
-	if (IsBlockWater(m_World->GetBlock(POSX_TOINT, POSY_TOINT, POSZ_TOINT)))
+	if (IsBlockWater(m_World->GetBlock(POS_TOINT)))
 	{
 		if (GetSpeedY() < 2)
 		{
@@ -159,9 +196,6 @@ void cBoat::Tick(std::chrono::milliseconds a_Dt, cChunk & a_Chunk)
 	{
 		SetLastDamage(GetLastDamage() - 1);
 	}
-
-	// Broadcast any changes in position
-	m_World->BroadcastEntityMetadata(*this);
 }
 
 
@@ -188,6 +222,9 @@ void cBoat::HandleSpeedFromAttachee(float a_Forward, float a_Sideways)
 void cBoat::SetLastDamage(int TimeSinceLastHit)
 {
 	m_LastDamage = TimeSinceLastHit;
+
+	// Tell the client to play the shaking animation
+	m_World->BroadcastEntityMetadata(*this);
 }
 
 
@@ -196,10 +233,16 @@ void cBoat::SetLastDamage(int TimeSinceLastHit)
 
 void cBoat::UpdatePaddles(bool a_RightPaddleUsed, bool a_LeftPaddleUsed)
 {
+	// Avoid telling client what it already knows since it may reset animation 1.13+
+	const bool Changed = (m_RightPaddleUsed != a_RightPaddleUsed) || (m_LeftPaddleUsed != a_LeftPaddleUsed);
+
 	m_RightPaddleUsed = a_RightPaddleUsed;
 	m_LeftPaddleUsed = a_LeftPaddleUsed;
 
-	m_World->BroadcastEntityMetadata(*this);
+	if (Changed)
+	{
+		m_World->BroadcastEntityMetadata(*this);
+	}
 }
 
 
@@ -294,4 +337,25 @@ cItem cBoat::MaterialToItem(eMaterial a_Material)
 		case bmDarkOak: return cItem(E_ITEM_DARK_OAK_BOAT);
 	}
 	UNREACHABLE("Unsupported boat material");
+}
+
+
+
+
+
+void cBoat::HandlePhysics(std::chrono::milliseconds a_Dt, cChunk & a_Chunk)
+{
+	/** Special version of cEntity::HandlePhysics(...) function for boats, checks if mobs
+	colliding with the boat can be attached and does if that's the case, then returns to
+	normal physics calcualtions */
+
+	// Calculate boat's bounding box, run collision callback on all entities in said box
+	cBoatCollisionCallback BoatCollisionCallback(this, m_Attachee);
+	Vector3d BoatPosition = GetPosition();
+	cBoundingBox bbBoat(
+		Vector3d(BoatPosition.x, floor(BoatPosition.y), BoatPosition.z), GetWidth() / 2, GetHeight());
+	m_World->ForEachEntityInBox(bbBoat, BoatCollisionCallback);
+
+	// Return to calculating physics normally
+	Super::HandlePhysics(a_Dt, a_Chunk);
 }

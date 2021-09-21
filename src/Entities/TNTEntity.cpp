@@ -8,8 +8,8 @@
 
 
 
-cTNTEntity::cTNTEntity(Vector3d a_Pos, int a_FuseTicks) :
-	super(etTNT, a_Pos, 0.98, 0.98),
+cTNTEntity::cTNTEntity(Vector3d a_Pos, unsigned a_FuseTicks) :
+	Super(etTNT, a_Pos, 0.98f, 0.98f),
 	m_FuseTicks(a_FuseTicks)
 {
 	SetGravity(-16.0f);
@@ -22,10 +22,10 @@ cTNTEntity::cTNTEntity(Vector3d a_Pos, int a_FuseTicks) :
 
 void cTNTEntity::SpawnOn(cClientHandle & a_ClientHandle)
 {
-	a_ClientHandle.SendSpawnObject(*this, 50, 1, 0, 0);  // 50 means TNT
-	m_bDirtyOrientation = false;
+	Super::SpawnOn(a_ClientHandle);
+	a_ClientHandle.SendSpawnEntity(*this);
+	m_bDirtyOrientation = false;  // TODO: why?
 	m_bDirtyHead = false;
-	super::SpawnOn(a_ClientHandle);
 }
 
 
@@ -34,10 +34,14 @@ void cTNTEntity::SpawnOn(cClientHandle & a_ClientHandle)
 
 void cTNTEntity::Explode(void)
 {
-	m_FuseTicks = 0;
-	Destroy();
 	FLOGD("BOOM at {0}", GetPosition());
-	m_World->DoExplosionAt(4.0, GetPosX(), GetPosY(), GetPosZ(), true, esPrimedTNT, this);
+
+	// Destroy first so the Explodinator doesn't find us (when iterating through entities):
+	Destroy();
+
+	// TODO: provided centred coordinates to all calls to DoExplosionAt, from entities and blocks
+	// This is to ensure maximum efficiency of explosions
+	m_World->DoExplosionAt(4.0, GetPosX(), GetPosY() + GetHeight() / 2, GetPosZ(), true, esPrimedTNT, this);
 }
 
 
@@ -46,16 +50,21 @@ void cTNTEntity::Explode(void)
 
 void cTNTEntity::Tick(std::chrono::milliseconds a_Dt, cChunk & a_Chunk)
 {
-	super::Tick(a_Dt, a_Chunk);
+	Super::Tick(a_Dt, a_Chunk);
 	if (!IsTicking())
 	{
 		// The base class tick destroyed us
 		return;
 	}
+
 	BroadcastMovementUpdate();
 
-	m_FuseTicks -= 1;
-	if (m_FuseTicks <= 0)
+	if (m_FuseTicks > 0)
+	{
+		--m_FuseTicks;
+	}
+
+	if (m_FuseTicks == 0)
 	{
 		Explode();
 	}

@@ -18,10 +18,7 @@
 #include "../Root.h"
 #include "../WebAdmin.h"
 
-extern "C"
-{
-	#include "lua/src/lauxlib.h"
-}
+#include "lua/src/lauxlib.h"
 
 #undef TOLUA_TEMPLATE_BIND
 #include "tolua++/include/tolua++.h"
@@ -90,25 +87,23 @@ bool cPluginLua::Load(void)
 		// Inject the identification global variables into the state:
 		lua_pushlightuserdata(m_LuaState, this);
 		lua_setglobal(m_LuaState, LUA_PLUGIN_INSTANCE_VAR_NAME);
-		lua_pushstring(m_LuaState, GetName().c_str());
-		lua_setglobal(m_LuaState, LUA_PLUGIN_NAME_VAR_NAME);
 
 		// Add the plugin's folder to the package.path and package.cpath variables (#693):
-		m_LuaState.AddPackagePath("path", FILE_IO_PREFIX + GetLocalFolder() + "/?.lua");
+		m_LuaState.AddPackagePath("path", GetLocalFolder() + "/?.lua");
 		#ifdef _WIN32
 			m_LuaState.AddPackagePath("cpath", GetLocalFolder() + "\\?.dll");
 		#else
-			m_LuaState.AddPackagePath("cpath", FILE_IO_PREFIX + GetLocalFolder() + "/?.so");
+			m_LuaState.AddPackagePath("cpath", GetLocalFolder() + "/?.so");
 		#endif
 
 		tolua_pushusertype(m_LuaState, this, "cPluginLua");
 		lua_setglobal(m_LuaState, "g_Plugin");
 	}
 
-	std::string PluginPath = FILE_IO_PREFIX + GetLocalFolder() + "/";
+	std::string PluginPath = GetLocalFolder() + "/";
 
 	// List all Lua files for this plugin. Info.lua has a special handling - make it the last to load:
-	AStringVector Files = cFile::GetFolderContents(PluginPath.c_str());
+	AStringVector Files = cFile::GetFolderContents(PluginPath);
 	AStringVector LuaFiles;
 	bool HasInfoLua = false;
 	for (AStringVector::const_iterator itr = Files.begin(), end = Files.end(); itr != end; ++itr)
@@ -187,7 +182,7 @@ bool cPluginLua::Load(void)
 void cPluginLua::Unload(void)
 {
 	ClearWebTabs();
-	super::Unload();
+	Super::Unload();
 	Close();
 }
 
@@ -523,6 +518,15 @@ bool cPluginLua::OnHopperPushingItem(cWorld & a_World, cHopperEntity & a_Hopper,
 
 
 
+bool cPluginLua::OnDropSpense(cWorld & a_World, cDropSpenserEntity & a_DropSpenser, int a_SlotNum)
+{
+	return CallSimpleHooks(cPluginManager::HOOK_DROPSPENSE, &a_World, &a_DropSpenser, a_SlotNum);
+}
+
+
+
+
+
 bool cPluginLua::OnKilled(cEntity & a_Victim, TakeDamageInfo & a_TDI, AString & a_DeathMessage)
 {
 	cOperation op(*this);
@@ -818,7 +822,7 @@ bool cPluginLua::OnPlayerUsingItem(cPlayer & a_Player, int a_BlockX, int a_Block
 
 
 
-bool cPluginLua::OnPluginMessage(cClientHandle & a_Client, const AString & a_Channel, const AString & a_Message)
+bool cPluginLua::OnPluginMessage(cClientHandle & a_Client, const AString & a_Channel, const ContiguousByteBufferView a_Message)
 {
 	return CallSimpleHooks(cPluginManager::HOOK_PLUGIN_MESSAGE, &a_Client, a_Channel, a_Message);
 }

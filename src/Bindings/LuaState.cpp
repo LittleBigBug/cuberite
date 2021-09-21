@@ -6,10 +6,7 @@
 #include "Globals.h"
 #include "LuaState.h"
 
-extern "C"
-{
-	#include "lua/src/lualib.h"
-}
+#include "lua/src/lualib.h"
 
 #undef TOLUA_TEMPLATE_BIND
 #include "tolua++/include/tolua++.h"
@@ -34,17 +31,11 @@ extern "C"
 
 
 
-// fwd: "SQLite/lsqlite3.c"
-extern "C"
-{
-	int luaopen_lsqlite3(lua_State * L);
-}
+// fwd: "SQLite/lsqlite3.cpp"
+int luaopen_lsqlite3(lua_State * L);
 
-// fwd: "LuaExpat/lxplib.c":
-extern "C"
-{
-	int luaopen_lxp(lua_State * L);
-}
+// fwd: "LuaExpat/lxplib.cpp":
+int luaopen_lxp(lua_State * L);
 
 
 
@@ -388,10 +379,8 @@ cLuaState::cStackTable::cStackTable(cLuaState & a_LuaState, int a_StackPos):
 
 void cLuaState::cStackTable::ForEachArrayElement(cFunctionRef<bool(cLuaState & a_LuaState, int a_Index)> a_ElementCallback) const
 {
-	auto numElements = luaL_getn(m_LuaState, m_StackPos);
-	#ifdef _DEBUG
-		auto stackTop = lua_gettop(m_LuaState);
-	#endif
+	const auto numElements = luaL_getn(m_LuaState, m_StackPos);
+	[[maybe_unused]] const auto stackTop = lua_gettop(m_LuaState);
 	for (int idx = 1; idx <= numElements; idx++)
 	{
 		// Push the idx-th element of the array onto stack top and call the callback:
@@ -413,9 +402,7 @@ void cLuaState::cStackTable::ForEachArrayElement(cFunctionRef<bool(cLuaState & a
 
 void cLuaState::cStackTable::ForEachElement(cFunctionRef<bool(cLuaState & a_LuaState)> a_ElementCallback) const
 {
-	#ifdef _DEBUG
-		auto stackTop = lua_gettop(m_LuaState);
-	#endif
+	[[maybe_unused]] const auto stackTop = lua_gettop(m_LuaState);
 	lua_pushvalue(m_LuaState, m_StackPos);  // Stk: <table>
 	lua_pushnil(m_LuaState);                // Stk: <table> nil
 	while (lua_next(m_LuaState, -2))        // Stk: <table> <key> <val>
@@ -863,7 +850,7 @@ void cLuaState::Push(const AStringVector & a_Vector)
 	int index = 1;
 	for (AStringVector::const_iterator itr = a_Vector.begin(), end = a_Vector.end(); itr != end; ++itr, ++index)
 	{
-		tolua_pushstring(m_LuaState, itr->c_str());
+		Push(*itr);
 		lua_rawseti(m_LuaState, newTable, index);
 	}
 }
@@ -910,6 +897,17 @@ void cLuaState::Push(const cLuaState::cRef & a_Ref)
 	ASSERT(IsValid());
 
 	lua_rawgeti(m_LuaState, LUA_REGISTRYINDEX, static_cast<int>(a_Ref));
+}
+
+
+
+
+
+void cLuaState::Push(const ContiguousByteBufferView a_Data)
+{
+	ASSERT(IsValid());
+
+	lua_pushlstring(m_LuaState, reinterpret_cast<const char *>(a_Data.data()), a_Data.size());
 }
 
 
@@ -1214,7 +1212,7 @@ bool cLuaState::GetStackValue(int a_StackPos, cCallbackPtr & a_Callback)
 {
 	if (a_Callback == nullptr)
 	{
-		a_Callback = cpp14::make_unique<cCallback>();
+		a_Callback = std::make_unique<cCallback>();
 	}
 	return a_Callback->RefStack(*this, a_StackPos);
 }
@@ -1236,7 +1234,7 @@ bool cLuaState::GetStackValue(int a_StackPos, cOptionalCallbackPtr & a_Callback)
 {
 	if (a_Callback == nullptr)
 	{
-		a_Callback = cpp14::make_unique<cOptionalCallback>();
+		a_Callback = std::make_unique<cOptionalCallback>();
 	}
 	return a_Callback->RefStack(*this, a_StackPos);
 }
@@ -1291,7 +1289,7 @@ bool cLuaState::GetStackValue(int a_StackPos, cStackTablePtr & a_StackTable)
 	}
 
 	// Assign the StackTable to the specified stack position:
-	a_StackTable = cpp14::make_unique<cStackTable>(*this, a_StackPos);
+	a_StackTable = std::make_unique<cStackTable>(*this, a_StackPos);
 	return true;
 }
 
@@ -1312,7 +1310,7 @@ bool cLuaState::GetStackValue(int a_StackPos, cTableRefPtr & a_TableRef)
 {
 	if (a_TableRef == nullptr)
 	{
-		a_TableRef = cpp14::make_unique<cTableRef>();
+		a_TableRef = std::make_unique<cTableRef>();
 	}
 	return a_TableRef->RefStack(*this, a_StackPos);
 }
@@ -1334,7 +1332,7 @@ bool cLuaState::GetStackValue(int a_StackPos, cTrackedRefPtr & a_Ref)
 {
 	if (a_Ref == nullptr)
 	{
-		a_Ref = cpp14::make_unique<cTrackedRef>();
+		a_Ref = std::make_unique<cTrackedRef>();
 	}
 	return a_Ref->RefStack(*this, a_StackPos);
 }
@@ -1350,6 +1348,37 @@ bool cLuaState::GetStackValue(int a_StackPos, cTrackedRefSharedPtr & a_Ref)
 		a_Ref = std::make_shared<cTrackedRef>();
 	}
 	return a_Ref->RefStack(*this, a_StackPos);
+}
+
+
+
+
+
+bool cLuaState::GetStackValue(int a_StackPos, ContiguousByteBuffer & a_Data)
+{
+	size_t Length = 0;
+	const char * const Data = lua_tolstring(m_LuaState, a_StackPos, &Length);
+	if (Data != nullptr)
+	{
+		a_Data.assign(reinterpret_cast<const std::byte *>(Data), Length);
+		return true;
+	}
+	return false;
+}
+
+
+
+
+
+bool cLuaState::GetStackValue(int a_StackPos, CustomStatistic & a_Value)
+{
+	if (lua_isnumber(m_LuaState, a_StackPos))
+	{
+		a_Value = static_cast<CustomStatistic>(static_cast<std::underlying_type_t<CustomStatistic>>(lua_tonumber(m_LuaState, a_StackPos)));
+		return true;
+	}
+
+	return true;
 }
 
 
@@ -1447,6 +1476,73 @@ bool cLuaState::GetStackValue(int a_StackPos, cUUID & a_Value)
 	}
 	return a_Value.FromString(StrUUID);
 }
+
+
+
+
+
+bool cLuaState::GetStackValue(int a_StackPos, std::string_view & a_Value)
+{
+	size_t Length = 0;
+	const char * const Value = lua_tolstring(m_LuaState, a_StackPos, &Length);
+	if (Value != nullptr)
+	{
+		a_Value = { Value, Length };
+		return true;
+	}
+	return false;
+}
+
+
+
+
+
+template <typename T>
+bool cLuaState::GetStackValue(int a_StackPos, Vector3<T> & a_ReturnedVal)
+{
+	tolua_Error err;
+	if (lua_isnil(m_LuaState, a_StackPos))
+	{
+		return false;
+	}
+	if (tolua_isusertype(m_LuaState, a_StackPos, "Vector3<double>", 0, &err))
+	{
+		a_ReturnedVal = **(static_cast<const Vector3d **>(lua_touserdata(m_LuaState, a_StackPos)));
+		return true;
+	}
+	if (tolua_isusertype(m_LuaState, a_StackPos, "Vector3<float>", 0, &err))
+	{
+		a_ReturnedVal = **(static_cast<const Vector3f **>(lua_touserdata(m_LuaState, a_StackPos)));
+		return true;
+	}
+	if (tolua_isusertype(m_LuaState, a_StackPos, "Vector3<int>", 0, &err))
+	{
+		a_ReturnedVal = **(static_cast<const Vector3i **>(lua_touserdata(m_LuaState, a_StackPos)));
+		return true;
+	}
+
+	// Bonus: Allow simple tables to work as Vector3:
+	if (lua_istable(m_LuaState, a_StackPos))
+	{
+		lua_rawgeti(m_LuaState, a_StackPos, 1);
+		lua_rawgeti(m_LuaState, a_StackPos, 2);
+		lua_rawgeti(m_LuaState, a_StackPos, 3);
+		T x, y, z;
+		if (!GetStackValues(-3, x, y, z))
+		{
+			return false;
+		}
+		a_ReturnedVal = Vector3<T>(x, y, z);
+		return true;
+	}
+
+	return false;
+}
+
+// Explicitly instantiate the previous function for all Vector3 types:
+template bool cLuaState::GetStackValue(int a_StackPos, Vector3d & a_ReturnedVal);
+template bool cLuaState::GetStackValue(int a_StackPos, Vector3f & a_ReturnedVal);
+template bool cLuaState::GetStackValue(int a_StackPos, Vector3i & a_ReturnedVal);
 
 
 
@@ -1827,6 +1923,32 @@ bool cLuaState::CheckParamFunctionOrNil(int a_StartParam, int a_EndParam)
 
 
 
+bool cLuaState::CheckParamVector3(int a_StartParam, int a_EndParam)
+{
+	ASSERT(IsValid());
+
+	if (a_EndParam < 0)
+	{
+		a_EndParam = a_StartParam;
+	}
+
+	for (int i = a_StartParam; i <= a_EndParam; ++i)
+	{
+		if (IsParamVector3(a_StartParam))
+		{
+			continue;
+		}
+
+		ApiParamError("Failed to read parameter #%d. Vector3 expected, got %s", i, GetTypeText(i).c_str());
+		return false;
+	}
+	return true;
+}
+
+
+
+
+
 bool cLuaState::CheckParamUUID(int a_StartParam, int a_EndParam)
 {
 	ASSERT(IsValid());
@@ -1938,24 +2060,40 @@ bool cLuaState::CheckParamStaticSelf(const char * a_SelfClassName)
 
 
 
-bool cLuaState::IsParamUserType(int a_Param, AString a_UserType)
+bool cLuaState::IsParamUserType(int a_ParamIdx, const AString & a_UserType)
 {
 	ASSERT(IsValid());
 
 	tolua_Error tolua_err;
-	return (tolua_isusertype(m_LuaState, a_Param, a_UserType.c_str(), 0, &tolua_err) == 1);
+	return (tolua_isusertype(m_LuaState, a_ParamIdx, a_UserType.c_str(), 0, &tolua_err) == 1);
 }
 
 
 
 
 
-bool cLuaState::IsParamNumber(int a_Param)
+bool cLuaState::IsParamNumber(int a_ParamIdx)
 {
 	ASSERT(IsValid());
 
 	tolua_Error tolua_err;
-	return (tolua_isnumber(m_LuaState, a_Param, 0, &tolua_err) == 1);
+	return (tolua_isnumber(m_LuaState, a_ParamIdx, 0, &tolua_err) == 1);
+}
+
+
+
+
+
+bool cLuaState::IsParamVector3(int a_ParamIdx)
+{
+	ASSERT(IsValid());
+
+	return (
+		IsParamUserType(a_ParamIdx, "Vector3<double>") ||
+		IsParamUserType(a_ParamIdx, "Vector3<float>") ||
+		IsParamUserType(a_ParamIdx, "Vector3<int>") ||
+		lua_istable(m_LuaState, a_ParamIdx)  // Assume any table is good enough
+	);
 }
 
 
@@ -2015,7 +2153,7 @@ void cLuaState::LogStackTrace(lua_State * a_LuaState, int a_StartingDepth)
 
 
 
-int cLuaState::ApiParamError(fmt::StringRef a_Msg)
+int cLuaState::ApiParamError(std::string_view a_Msg)
 {
 	// Retrieve current function name
 	lua_Debug entry;
@@ -2136,11 +2274,10 @@ int cLuaState::CopyStackFrom(cLuaState & a_SrcLuaState, int a_SrcStart, int a_Sr
 
 bool cLuaState::CopyTableFrom(cLuaState & a_SrcLuaState, int a_SrcStackIdx, int a_NumAllowedNestingLevels)
 {
+	[[maybe_unused]] const auto srcTop = lua_gettop(a_SrcLuaState);
+	[[maybe_unused]] const auto dstTop = lua_gettop(m_LuaState);
+
 	// Create the dest table:
-	#ifdef _DEBUG
-		auto srcTop = lua_gettop(a_SrcLuaState);
-		auto dstTop = lua_gettop(m_LuaState);
-	#endif
 	lua_createtable(m_LuaState, 0, 0);            // DST: <table>
 	lua_pushvalue(a_SrcLuaState, a_SrcStackIdx);  // SRC: <table>
 	lua_pushnil(a_SrcLuaState);                   // SRC: <table> <key>

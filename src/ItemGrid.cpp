@@ -440,6 +440,31 @@ int cItemGrid::RemoveItem(const cItem & a_ItemStack)
 
 
 
+cItem * cItemGrid::FindItem(const cItem & a_RecipeItem)
+{
+	if (!m_Slots.IsStorageAllocated())
+	{
+		return nullptr;
+	}
+
+	for (int i = 0; i < m_Slots.size(); i++)
+	{
+		// Items are equal if none is greater the other
+		auto compare = cItem::sItemCompare{};
+		if (!compare(a_RecipeItem, m_Slots[i]) &&
+			!compare(m_Slots[i], a_RecipeItem))
+		{
+			return &m_Slots[i];
+		}
+	}
+
+	return nullptr;
+}
+
+
+
+
+
 int cItemGrid::ChangeSlotCount(int a_SlotNum, int a_AddToCount)
 {
 	if (!IsValidSlotNum(a_SlotNum))
@@ -745,7 +770,7 @@ void cItemGrid::GenerateRandomLootWithBooks(const cLootProbab * a_LootProbabs, s
 
 		// Choose the enchantments
 		cWeightedEnchantments Enchantments;
-		cEnchantments::AddItemEnchantmentWeights(Enchantments, E_ITEM_BOOK, 24 + Noise.IntNoise2DInt(a_Seed, TotalProbab) % 7);
+		cEnchantments::AddItemEnchantmentWeights(Enchantments, E_ITEM_BOOK, static_cast<unsigned>(24 + Noise.IntNoise2DInt(a_Seed, TotalProbab) % 7));
 		int NumEnchantments = Noise.IntNoise3DInt(TotalProbab, Rnd, a_Seed) % 5;  // The number of enchantments this book wil get.
 
 		for (int j = 0; j <= NumEnchantments; j++)
@@ -825,7 +850,3 @@ void cItemGrid::TriggerListeners(int a_SlotNum)
 	}  // for itr - m_Listeners[]
 	m_IsInTriggerListeners = false;
 }
-
-
-
-

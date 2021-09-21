@@ -57,7 +57,7 @@ void cBioGenConstant::InitializeBiomeGen(cIniFile & a_IniFile)
 ////////////////////////////////////////////////////////////////////////////////
 // cBioGenCache:
 
-cBioGenCache::cBioGenCache(cBiomeGenPtr a_BioGenToCache, size_t a_CacheSize) :
+cBioGenCache::cBioGenCache(cBiomeGen & a_BioGenToCache, size_t a_CacheSize) :
 	m_BioGenToCache(a_BioGenToCache),
 	m_CacheSize(a_CacheSize),
 	m_NumHits(0),
@@ -110,7 +110,7 @@ void cBioGenCache::GenBiomes(cChunkCoords a_ChunkCoords, cChunkDef::BiomeMap & a
 
 	// Not in the cache:
 	m_NumMisses++;
-	m_BioGenToCache->GenBiomes(a_ChunkCoords, a_BiomeMap);
+	m_BioGenToCache.GenBiomes(a_ChunkCoords, a_BiomeMap);
 
 	// Insert it as the first item in the MRU order:
 	size_t Idx = m_CacheOrder[m_CacheSize - 1];
@@ -129,8 +129,8 @@ void cBioGenCache::GenBiomes(cChunkCoords a_ChunkCoords, cChunkDef::BiomeMap & a
 
 void cBioGenCache::InitializeBiomeGen(cIniFile & a_IniFile)
 {
-	super::InitializeBiomeGen(a_IniFile);
-	m_BioGenToCache->InitializeBiomeGen(a_IniFile);
+	Super::InitializeBiomeGen(a_IniFile);
+	m_BioGenToCache.InitializeBiomeGen(a_IniFile);
 }
 
 
@@ -139,13 +139,14 @@ void cBioGenCache::InitializeBiomeGen(cIniFile & a_IniFile)
 ////////////////////////////////////////////////////////////////////////////////
 // cBioGenMulticache:
 
-cBioGenMulticache::cBioGenMulticache(cBiomeGenPtr a_BioGenToCache, size_t a_SubCacheSize, size_t a_NumSubCaches) :
-	m_NumSubCaches(a_NumSubCaches)
+cBioGenMulticache::cBioGenMulticache(std::unique_ptr<cBiomeGen> a_BioGenToCache, size_t a_SubCacheSize, size_t a_NumSubCaches) :
+	m_NumSubCaches(a_NumSubCaches),
+	m_Underlying(std::move(a_BioGenToCache))
 {
 	m_Caches.reserve(a_NumSubCaches);
 	for (size_t i = 0; i < a_NumSubCaches; i++)
 	{
-		m_Caches.push_back(cBiomeGenPtr(new cBioGenCache(a_BioGenToCache, a_SubCacheSize)));
+		m_Caches.push_back(std::make_unique<cBioGenCache>(*m_Underlying, a_SubCacheSize));
 	}
 }
 
@@ -167,7 +168,7 @@ void cBioGenMulticache::GenBiomes(cChunkCoords a_ChunkCoords, cChunkDef::BiomeMa
 
 void cBioGenMulticache::InitializeBiomeGen(cIniFile & a_IniFile)
 {
-	for (auto itr : m_Caches)
+	for (auto & itr : m_Caches)
 	{
 		itr->InitializeBiomeGen(a_IniFile);
 	}
@@ -280,7 +281,7 @@ void cBioGenCheckerboard::GenBiomes(cChunkCoords a_ChunkCoords, cChunkDef::Biome
 
 void cBioGenCheckerboard::InitializeBiomeGen(cIniFile & a_IniFile)
 {
-	super::InitializeBiomeGen(a_IniFile);
+	Super::InitializeBiomeGen(a_IniFile);
 	AString Biomes = a_IniFile.GetValueSet ("Generator", "CheckerBoardBiomes",    "");
 	m_BiomeSize    = a_IniFile.GetValueSetI("Generator", "CheckerboardBiomeSize", 64);
 	m_BiomeSize = (m_BiomeSize < 8) ? 8 : m_BiomeSize;
@@ -315,7 +316,7 @@ void cBioGenVoronoi::GenBiomes(cChunkCoords a_ChunkCoords, cChunkDef::BiomeMap &
 
 void cBioGenVoronoi::InitializeBiomeGen(cIniFile & a_IniFile)
 {
-	super::InitializeBiomeGen(a_IniFile);
+	Super::InitializeBiomeGen(a_IniFile);
 	int CellSize     = a_IniFile.GetValueSetI("Generator", "VoronoiCellSize", 128);
 	int JitterSize   = a_IniFile.GetValueSetI("Generator", "VoronoiJitterSize", CellSize);
 	int OddRowOffset = a_IniFile.GetValueSetI("Generator", "VoronoiOddRowOffset", 0);
@@ -364,7 +365,7 @@ void cBioGenDistortedVoronoi::GenBiomes(cChunkCoords a_ChunkCoords, cChunkDef::B
 
 void cBioGenDistortedVoronoi::InitializeBiomeGen(cIniFile & a_IniFile)
 {
-	super::InitializeBiomeGen(a_IniFile);
+	Super::InitializeBiomeGen(a_IniFile);
 	m_CellSize = a_IniFile.GetValueSetI("Generator", "DistortedVoronoiCellSize", 96);
 	m_Voronoi.SetCellSize(m_CellSize);
 	InitializeBiomes(a_IniFile.GetValueSet("Generator", "DistortedVoronoiBiomes", ""));
@@ -1133,7 +1134,7 @@ protected:
 ////////////////////////////////////////////////////////////////////////////////
 // cBiomeGen:
 
-cBiomeGenPtr cBiomeGen::CreateBiomeGen(cIniFile & a_IniFile, int a_Seed, bool & a_CacheOffByDefault)
+std::unique_ptr<cBiomeGen> cBiomeGen::CreateBiomeGen(cIniFile & a_IniFile, int a_Seed, bool & a_CacheOffByDefault)
 {
 	AString BiomeGenName = a_IniFile.GetValue("Generator", "BiomeGen");
 	if (BiomeGenName.empty())
@@ -1142,37 +1143,37 @@ cBiomeGenPtr cBiomeGen::CreateBiomeGen(cIniFile & a_IniFile, int a_Seed, bool & 
 		BiomeGenName = "Grown";
 	}
 
-	cBiomeGen * res = nullptr;
+	std::unique_ptr<cBiomeGen> res;
 	a_CacheOffByDefault = false;
 	if (NoCaseCompare(BiomeGenName, "constant") == 0)
 	{
-		res = new cBioGenConstant;
+		res = std::make_unique<cBioGenConstant>();
 		a_CacheOffByDefault = true;  // we're generating faster than a cache would retrieve data :)
 	}
 	else if (NoCaseCompare(BiomeGenName, "checkerboard") == 0)
 	{
-		res = new cBioGenCheckerboard;
+		res = std::make_unique<cBioGenCheckerboard>();
 		a_CacheOffByDefault = true;  // we're (probably) generating faster than a cache would retrieve data
 	}
 	else if (NoCaseCompare(BiomeGenName, "voronoi") == 0)
 	{
-		res = new cBioGenVoronoi(a_Seed);
+		res = std::make_unique<cBioGenVoronoi>(a_Seed);
 	}
 	else if (NoCaseCompare(BiomeGenName, "distortedvoronoi") == 0)
 	{
-		res = new cBioGenDistortedVoronoi(a_Seed);
+		res = std::make_unique<cBioGenDistortedVoronoi>(a_Seed);
 	}
 	else if (NoCaseCompare(BiomeGenName, "twolevel") == 0)
 	{
-		res = new cBioGenTwoLevel(a_Seed);
+		res = std::make_unique<cBioGenTwoLevel>(a_Seed);
 	}
 	else if (NoCaseCompare(BiomeGenName, "multistepmap") == 0)
 	{
-		res = new cBioGenMultiStepMap(a_Seed);
+		res = std::make_unique<cBioGenMultiStepMap>(a_Seed);
 	}
 	else if (NoCaseCompare(BiomeGenName, "grownprot") == 0)
 	{
-		res = new cBioGenProtGrown(a_Seed);
+		res = std::make_unique<cBioGenProtGrown>(a_Seed);
 	}
 	else
 	{
@@ -1180,11 +1181,11 @@ cBiomeGenPtr cBiomeGen::CreateBiomeGen(cIniFile & a_IniFile, int a_Seed, bool & 
 		{
 			LOGWARNING("Unknown BiomeGen \"%s\", using \"Grown\" instead.", BiomeGenName.c_str());
 		}
-		res = new cBioGenGrown(a_Seed);
+		res = std::make_unique<cBioGenGrown>(a_Seed);
 	}
 	res->InitializeBiomeGen(a_IniFile);
 
-	return cBiomeGenPtr(res);
+	return res;
 }
 
 
@@ -1234,7 +1235,3 @@ protected:
 } g_BioGenPerfTest;
 
 #endif
-
-
-
-

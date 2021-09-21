@@ -16,23 +16,18 @@
 
 
 
-class cBlockFarmlandHandler :
+class cBlockFarmlandHandler final :
 	public cBlockHandler
 {
-	using super = cBlockHandler;
+	using Super = cBlockHandler;
 
 public:
 
-	cBlockFarmlandHandler(BLOCKTYPE a_BlockType):
-		super(a_BlockType)
-	{
-	}
+	using Super::Super;
 
+private:
 
-
-
-
-	virtual cItems ConvertToPickups(NIBBLETYPE a_BlockMeta, cBlockEntity * a_BlockEntity, const cEntity * a_Digger, const cItem * a_Tool) override
+	virtual cItems ConvertToPickups(const NIBBLETYPE a_BlockMeta, const cItem * const a_Tool) const override
 	{
 		return cItem(E_BLOCK_DIRT, 1, 0);
 	}
@@ -41,26 +36,32 @@ public:
 
 
 
-	virtual void OnUpdate(cChunkInterface & cChunkInterface, cWorldInterface & a_WorldInterface, cBlockPluginInterface & a_PluginInterface, cChunk & a_Chunk, int a_RelX, int a_RelY, int a_RelZ) override
+	virtual void OnUpdate(
+		cChunkInterface & a_ChunkInterface,
+		cWorldInterface & a_WorldInterface,
+		cBlockPluginInterface & a_PluginInterface,
+		cChunk & a_Chunk,
+		const Vector3i a_RelPos
+	) const override
 	{
-		NIBBLETYPE BlockMeta = a_Chunk.GetMeta(a_RelX, a_RelY, a_RelZ);
+		auto BlockMeta = a_Chunk.GetMeta(a_RelPos);
 
-		if (IsWaterInNear(a_Chunk, a_RelX, a_RelY, a_RelZ))
+		if (IsWaterInNear(a_Chunk, a_RelPos))
 		{
 			// Water was found, set block meta to 7
-			a_Chunk.FastSetBlock(a_RelX, a_RelY, a_RelZ, m_BlockType, 7);
+			a_Chunk.FastSetBlock(a_RelPos, m_BlockType, 7);
 			return;
 		}
 
 		// Water wasn't found, de-hydrate block:
 		if (BlockMeta > 0)
 		{
-			a_Chunk.FastSetBlock(a_RelX, a_RelY, a_RelZ, E_BLOCK_FARMLAND, --BlockMeta);
+			a_Chunk.FastSetBlock(a_RelPos, E_BLOCK_FARMLAND, --BlockMeta);
 			return;
 		}
 
 		// Farmland too dry. If nothing is growing on top, turn back to dirt:
-		BLOCKTYPE UpperBlock = (a_RelY >= cChunkDef::Height - 1) ? static_cast<BLOCKTYPE>(E_BLOCK_AIR) : a_Chunk.GetBlock(a_RelX, a_RelY + 1, a_RelZ);
+		auto UpperBlock = cChunkDef::IsValidHeight(a_RelPos.y + 1) ? a_Chunk.GetBlock(a_RelPos.addedY(1)) : E_BLOCK_AIR;
 		switch (UpperBlock)
 		{
 			case E_BLOCK_BEETROOTS:
@@ -75,7 +76,7 @@ public:
 			}
 			default:
 			{
-				a_Chunk.SetBlock({a_RelX, a_RelY, a_RelZ}, E_BLOCK_DIRT, 0);
+				a_Chunk.SetBlock(a_RelPos, E_BLOCK_DIRT, 0);
 				break;
 			}
 		}
@@ -85,7 +86,7 @@ public:
 
 
 
-	virtual void OnNeighborChanged(cChunkInterface & a_ChunkInterface, Vector3i a_BlockPos, eBlockFace a_WhichNeighbor) override
+	virtual void OnNeighborChanged(cChunkInterface & a_ChunkInterface, Vector3i a_BlockPos, eBlockFace a_WhichNeighbor) const override
 	{
 		// Don't care about any neighbor but the one above us (fix recursion loop in #2213):
 		if (a_WhichNeighbor != BLOCK_FACE_YP)
@@ -111,21 +112,22 @@ public:
 
 
 
-	bool IsWaterInNear(cChunk & a_Chunk, int a_RelX, int a_RelY, int a_RelZ)
+	/** Returns true if there's either a water source block close enough to hydrate the specified position, or it's raining there. */
+	static bool IsWaterInNear(const cChunk & a_Chunk, const Vector3i a_RelPos)
 	{
-		if (a_Chunk.GetWorld()->IsWeatherWetAt(a_RelX, a_RelZ))
+		if (a_Chunk.IsWeatherWetAt(a_RelPos.addedY(1)))
 		{
-			// Rain hydrates farmland, too, except in Desert biomes.
+			// Rain hydrates farmland, too
 			return true;
 		}
+
+		const auto WorldPos = a_Chunk.RelativeToAbsolute(a_RelPos);
 
 		// Search for water in a close proximity:
 		// Ref.: https://minecraft.gamepedia.com/Farmland#Hydration
 		// TODO: Rewrite this to use the chunk and its neighbors directly
 		cBlockArea Area;
-		int BlockX = a_RelX + a_Chunk.GetPosX() * cChunkDef::Width;
-		int BlockZ = a_RelZ + a_Chunk.GetPosZ() * cChunkDef::Width;
-		if (!Area.Read(*a_Chunk.GetWorld(), BlockX - 4, BlockX + 4, a_RelY, a_RelY + 1, BlockZ - 4, BlockZ + 4))
+		if (!Area.Read(*a_Chunk.GetWorld(), WorldPos - Vector3i(4, 0, 4), WorldPos + Vector3i(4, 1, 4)))
 		{
 			// Too close to the world edge, cannot check surroundings
 			return false;
@@ -144,7 +146,11 @@ public:
 		return false;
 	}
 
-	virtual bool CanSustainPlant(BLOCKTYPE a_Plant) override
+
+
+
+
+	virtual bool CanSustainPlant(BLOCKTYPE a_Plant) const override
 	{
 		return (
 			(a_Plant == E_BLOCK_BEETROOTS) ||
