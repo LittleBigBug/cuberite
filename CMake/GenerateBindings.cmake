@@ -43,7 +43,10 @@ function(enable_bindings_generation)
 		EffectID.h
 		Enchantments.h
 		Entities/Boat.h
+<<<<<<< HEAD
 		Entities/ArmorStand.h
+=======
+>>>>>>> 3b47eaadb85ac42b70d35d03d919181830b40a41
 		Entities/ArrowEntity.h
 		Entities/Entity.h
 		Entities/ExpOrb.h

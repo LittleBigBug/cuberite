@@ -39,4 +39,8 @@ target_sources(
 	PluginLua.h
 	PluginManager.h
 	tolua++.h
+<<<<<<< HEAD
 )
+=======
+)
+>>>>>>> 3b47eaadb85ac42b70d35d03d919181830b40a41

@@ -597,6 +597,7 @@ function OnAllChunksAvailable()</pre> All return values from the callbacks are i
 							Type = "cEntity",
 							IsOptional = true,
 						},
+<<<<<<< HEAD
 					},
 					Returns =
 					{
@@ -604,6 +605,15 @@ function OnAllChunksAvailable()</pre> All return values from the callbacks are i
 							Type = "boolean",
 						},
 					},
+=======
+					},
+					Returns =
+					{
+						{
+							Type = "boolean",
+						},
+					},
+>>>>>>> 3b47eaadb85ac42b70d35d03d919181830b40a41
 					Notes = "Replaces the specified block with air, without dropping the usual pickups for the block. Wakes up the simulators for the block and its neighbors. The optional Digger parameter specifies the entity who dug the block, usually a player. Returns true on success, or false if the chunk is not loaded or invalid coords. See also DropBlockAsPickups() for the version that drops pickups.",
 				},
 			},

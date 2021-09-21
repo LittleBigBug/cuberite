@@ -473,3 +473,7 @@ private:
 } ;  // tolua_export
 
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> 3b47eaadb85ac42b70d35d03d919181830b40a41

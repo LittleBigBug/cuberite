@@ -22,7 +22,10 @@ cTNTEntity::cTNTEntity(Vector3d a_Pos, unsigned a_FuseTicks) :
 
 void cTNTEntity::SpawnOn(cClientHandle & a_ClientHandle)
 {
+<<<<<<< HEAD
 	Super::SpawnOn(a_ClientHandle);
+=======
+>>>>>>> 3b47eaadb85ac42b70d35d03d919181830b40a41
 	a_ClientHandle.SendSpawnEntity(*this);
 	m_bDirtyOrientation = false;  // TODO: why?
 	m_bDirtyHead = false;

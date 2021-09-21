@@ -442,7 +442,10 @@ void cProjectileEntity::HandlePhysics(std::chrono::milliseconds a_Dt, cChunk & a
 
 void cProjectileEntity::SpawnOn(cClientHandle & a_Client)
 {
+<<<<<<< HEAD
 	Super::SpawnOn(a_Client);
+=======
+>>>>>>> 3b47eaadb85ac42b70d35d03d919181830b40a41
 	a_Client.SendSpawnEntity(*this);
 	a_Client.SendEntityMetadata(*this);
 }
@@ -456,3 +459,7 @@ void cProjectileEntity::CollectedBy(cPlayer & a_Dest)
 	// Overriden in arrow
 	UNUSED(a_Dest);
 }
+<<<<<<< HEAD
+=======
+
+>>>>>>> 3b47eaadb85ac42b70d35d03d919181830b40a41

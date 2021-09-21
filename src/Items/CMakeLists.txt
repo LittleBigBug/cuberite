@@ -5,7 +5,10 @@ target_sources(
 
 	ItemAnvil.h
 	ItemArmor.h
+<<<<<<< HEAD
 	ItemArmorStand.h
+=======
+>>>>>>> 3b47eaadb85ac42b70d35d03d919181830b40a41
 	ItemAxe.h
 	ItemBanner.h
 	ItemBed.h

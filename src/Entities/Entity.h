@@ -480,6 +480,10 @@ public:
 	Primarily inteded for protocol use. */
 	bool IsOrientationDirty() const;
 
+	/** Returns whether the entity's orientation has been set manually.
+	Primarily inteded for protocol use. */
+	bool IsOrientationDirty() const;
+
 	/** Makes sure head yaw is not over the specified range. */
 	void WrapHeadYaw();
 

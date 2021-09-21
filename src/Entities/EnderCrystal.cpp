@@ -64,7 +64,10 @@ void cEnderCrystal::SetDisplayBeam(bool a_DisplayBeam)
 
 void cEnderCrystal::SpawnOn(cClientHandle & a_ClientHandle)
 {
+<<<<<<< HEAD
 	Super::SpawnOn(a_ClientHandle);
+=======
+>>>>>>> 3b47eaadb85ac42b70d35d03d919181830b40a41
 	a_ClientHandle.SendSpawnEntity(*this);
 	a_ClientHandle.SendEntityMetadata(*this);
 }

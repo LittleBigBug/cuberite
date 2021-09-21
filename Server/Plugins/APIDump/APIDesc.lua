@@ -3838,6 +3838,7 @@ local Hash = cCryptoHash.sha1HexString("DataToHash")
 					},
 					Notes = "Returns true if the entity is an arrow.",
 				},
+<<<<<<< HEAD
 				IsArmorStand =
 				{
 				    Returns =
@@ -3848,6 +3849,8 @@ local Hash = cCryptoHash.sha1HexString("DataToHash")
 				    },
 					Notes = "Returns true if the entity is an {{cArmorStand|armor stand}}.",
 				},
+=======
+>>>>>>> 3b47eaadb85ac42b70d35d03d919181830b40a41
 				IsBoat =
 				{
 					Returns =
@@ -6818,6 +6821,35 @@ These ItemGrids are available in the API and can be manipulated by the plugins, 
 					Notes = "Removes one item from the hotbar's currently selected slot. Returns true on success.",
 				},
 				ReplaceOneEquippedItem =
+<<<<<<< HEAD
+=======
+				{
+					Params =
+					{
+						{
+							Name = "Item",
+							Type = "cItem",
+						},
+						{
+							Name = "TryOtherSlots",
+							Type = "boolean",
+							IsOptional = true,
+						},
+					},
+					Returns =
+					{
+						{
+							Type = "number",
+						},
+					},
+					Notes = "Removes one item from the the current equipped item stack, and attempts to add the specified item stack back to the same slot. If it is not possible to place the item in the same slot, optionally (default true) tries to place the specified item elsewhere in the inventory. Returns the number of items successfully added. If the currently equipped slot is empty, its contents are simply set to the given Item.",
+				},
+				SendEquippedSlot =
+				{
+					Notes = "Sends the equipped item slot to the client",
+				},
+				SetArmorSlot =
+>>>>>>> 3b47eaadb85ac42b70d35d03d919181830b40a41
 				{
 					Params =
 					{
@@ -6926,6 +6958,23 @@ These ItemGrids are available in the API and can be manipulated by the plugins, 
 					Notes = "Sets the specified slot contents",
 				},
 				SetEquippedItem =
+<<<<<<< HEAD
+				{
+					Params =
+					{
+						{
+							Name = "Item",
+							Type = "cItem",
+						},
+					},
+					Notes = "Sets current item in the equipped hotbar slot",
+				},
+			},
+			Constants =
+			{
+				invArmorCount =
+=======
+>>>>>>> 3b47eaadb85ac42b70d35d03d919181830b40a41
 				{
 					Params =
 					{
@@ -9639,6 +9688,94 @@ a_Player:OpenWindow(Window);
 					Notes = "Removes all currently applied entity effects",
 				},
 				FindTeleportDestination =
+<<<<<<< HEAD
+=======
+				{
+					{
+						Params =
+						{
+							{
+								Name = "World",
+								Type = "cWorld",
+							},
+							{
+								Name = "HeightRequired",
+								Type = "number",
+							},
+							{
+								Name = "NumTries",
+								Type = "number",
+							},
+							{
+								Name = "Destination",
+								Type = "Vector3d",
+							},
+							{
+								Name = "MinBoxCorner",
+								Type = "Vector3i",
+							},
+							{
+								Name = "MaxBoxCorner",
+								Type = "Vector3i",
+							},
+						},
+						Notes = "Function to find suitable teleport destination in or below box. Returns true and places result in Destination if found, otherwise returns false. Details at: https://minecraft.fandom.com/wiki/Enderman#Teleportation.",
+					},
+					{
+						Params =
+						{
+							{
+								Name = "World",
+								Type = "cWorld",
+							},
+							{
+								Name = "HeightRequired",
+								Type = "number",
+							},
+							{
+								Name = "NumTries",
+								Type = "number",
+							},
+							{
+								Name = "Destination",
+								Type = "Vector3d",
+							},
+							{
+								Name = "BoundingBox",
+								Type = "cBoundingBox",
+							},
+						},
+						Notes = "Function to find suitable teleport destination in or below box. Returns true and places result in Destination if found, otherwise returns false. Details at: https://minecraft.fandom.com/wiki/Enderman#Teleportation.",
+					},
+					{
+						Params =
+						{
+							{
+								Name = "World",
+								Type = "cWorld",
+							},
+							{
+								Name = "HeightRequired",
+								Type = "number",
+							},
+							{
+								Name = "NumTries",
+								Type = "number",
+							},
+							{
+								Name = "Centre",
+								Type = "Vector3i",
+							},
+							{
+								Name = "HalfCubeWidth",
+								Type = "number",
+							},
+						},
+						Notes = "Function to find suitable teleport destination in or below box. Returns true and places result in Destination if found, otherwise returns false. Details at: https://minecraft.fandom.com/wiki/Enderman#Teleportation.",
+					},
+				},
+				HasEntityEffect =
+>>>>>>> 3b47eaadb85ac42b70d35d03d919181830b40a41
 				{
 					{
 						Params =
@@ -9755,6 +9892,82 @@ a_Player:OpenWindow(Window);
 			Inherits = "cEntity",
 		},
 		cEnderCrystal =
+<<<<<<< HEAD
+		{
+			Desc = [[
+				This class represents an ender crystal. This entity can be spawned by using {{cWorld#SpawnEnderCrystal_1|cWorld:SpawnEnderCrystal}}.
+			]],
+			Functions =
+			{
+				DisplaysBeam =
+				{
+					Returns =
+					{
+						{
+							Type = "boolean",
+						},
+						Notes = "Returns true if the ender crystal displays its beam.",
+					},
+				},
+				GetBeamTarget =
+				{
+					Returns =
+					{
+						{
+							Type = "Vector3i",
+						},
+					},
+					Notes = "Returns the Block position the beam is pointing to.",
+				},
+				SetBeamTarget =
+				{
+					Params =
+					{
+						{
+							Name = "BeamTarget",
+							Type = "Vector3i",
+						},
+					},
+					Notes = "Sets the target of the beam of this ender crystal.",
+				},
+				SetDisplayBeam =
+				{
+					Params =
+					{
+						{
+							Name = "DisplaysBeam",
+							Type = "boolean",
+						},
+						Notes = "Sets if the ender crystal should display its beam.",
+					},
+				},
+				SetShowBottom =
+				{
+					Params =
+					{
+						{
+							Name = "ShowsBottom",
+							Type = "boolean",
+						},
+						Notes = "Sets if the ender crystal should broadcast its bedrock base.",
+					},
+				},
+				ShowsBottom =
+				{
+					Returns =
+					{
+						{
+							Type = "boolean",
+						},
+						Notes = "Returns true if the bedrock base is displayed.",
+					},
+				},
+			},
+			Inherits = "cEntity",
+		},
+		cExpOrb =
+=======
+>>>>>>> 3b47eaadb85ac42b70d35d03d919181830b40a41
 		{
 			Desc = [[
 				This class represents an ender crystal. This entity can be spawned by using {{cWorld#SpawnEnderCrystal_1|cWorld:SpawnEnderCrystal}}.
@@ -10245,6 +10458,7 @@ a_Player:OpenWindow(Window);
 					},
 					Notes = "Returns equipped off hand item (left hand).",
 				},
+<<<<<<< HEAD
 				GetEquippedHelmet =
 				{
 					Returns =
@@ -10257,10 +10471,14 @@ a_Player:OpenWindow(Window);
 					Notes = "Returns equipped helmet.",
 				},
 				GetEquippedChestplate =
+=======
+				GetCurrentXp =
+>>>>>>> 3b47eaadb85ac42b70d35d03d919181830b40a41
 				{
 					Returns =
 					{
 						{
+<<<<<<< HEAD
 							Name = "Item",
 							Type = "cItem",
 						},
@@ -10268,6 +10486,14 @@ a_Player:OpenWindow(Window);
 					Notes = "Returns equipped chestplate.",
 				},
 				GetEquippedLeggings =
+=======
+							Type = "number",
+						},
+					},
+					Notes = "Returns the current amount of XP",
+				},
+				GetCustomName =
+>>>>>>> 3b47eaadb85ac42b70d35d03d919181830b40a41
 				{
 					Returns =
 					{
@@ -10276,6 +10502,7 @@ a_Player:OpenWindow(Window);
 							Type = "cItem",
 						},
 					},
+<<<<<<< HEAD
 					Notes = "Returns equipped leggings.",
 				},
 				GetEquippedBoots =
@@ -10290,15 +10517,27 @@ a_Player:OpenWindow(Window);
 					Notes = "Returns equipped boots.",
 				},
 				SetEquippedWeapon =
+=======
+					Notes = "Returns the custom name of this player. If the player hasn't a custom name, it will return an empty string.",
+				},
+				GetDraggingItem =
+>>>>>>> 3b47eaadb85ac42b70d35d03d919181830b40a41
 				{
 					Params =
 					{
 						{
+<<<<<<< HEAD
 							Name = "Item",
 							Type = "cItem",
 						},
 					},
 					Notes = "Sets equipped weapon (right hand).",
+=======
+							Type = "cItem",
+						},
+					},
+					Notes = "Returns the item the player is dragging in a UI window."
+>>>>>>> 3b47eaadb85ac42b70d35d03d919181830b40a41
 				},
 				SetOffHandEquipedItem =
 				{
@@ -10498,6 +10737,7 @@ a_Player:OpenWindow(Window);
 					Include = "bm.*",
 					TextBefore = "These constans are the different wood materials of the boat.",
 				},
+<<<<<<< HEAD
 			},
 			Inherits = "cEntity",
 		},
@@ -10521,6 +10761,9 @@ a_Player:OpenWindow(Window);
 					Notes = "Returns whether this pickup is allowed to combine with other similar pickups.",
 				},
 				CollectedBy =
+=======
+				GetName =
+>>>>>>> 3b47eaadb85ac42b70d35d03d919181830b40a41
 				{
 					Params =
 					{
@@ -10558,7 +10801,21 @@ a_Player:OpenWindow(Window);
 					},
 					Notes = "Returns the item represented by this pickup",
 				},
+<<<<<<< HEAD
 				GetLifetime =
+=======
+				GetPrefix =
+				{
+					Returns =
+					{
+						{
+							Type = "string",
+						},
+					},
+					Notes = "Returns the prefix to player names for messages (based on their rank), may contain @ format codes.",
+				},
+				GetRestrictions =
+>>>>>>> 3b47eaadb85ac42b70d35d03d919181830b40a41
 				{
 					Returns =
 					{
@@ -10588,16 +10845,37 @@ a_Player:OpenWindow(Window);
 					},
 					Notes = "Returns true if the pickup was created by a player",
 				},
+<<<<<<< HEAD
 				SetAge =
+=======
+				GetStatistics =
+>>>>>>> 3b47eaadb85ac42b70d35d03d919181830b40a41
 				{
 					Params =
 					{
 						{
+<<<<<<< HEAD
 							Name = "AgeTicks",
 							Type = "number",
 						},
 					},
 					Notes = "Sets the pickup's age, in ticks.",
+=======
+							Type = "StatisticsManager",
+						},
+					},
+					Notes = "Returns the player's statistics manager."
+				},
+				GetSuffix =
+				{
+					Returns =
+					{
+						{
+							Type = "string",
+						},
+					},
+					Notes = "Returns the suffix to player names for messages (based on their rank), may contain @ format codes.",
+>>>>>>> 3b47eaadb85ac42b70d35d03d919181830b40a41
 				},
 				SetCanCombine =
 				{
@@ -10862,7 +11140,11 @@ a_Player:OpenWindow(Window);
 					},
 					Notes = "Returns the position of the player's eyes, as a {{Vector3d}}",
 				},
+<<<<<<< HEAD
 				GetFloaterID =
+=======
+				IsLeftHanded =
+>>>>>>> 3b47eaadb85ac42b70d35d03d919181830b40a41
 				{
 					Returns =
 					{
@@ -10870,9 +11152,15 @@ a_Player:OpenWindow(Window);
 							Type = "number",
 						},
 					},
+<<<<<<< HEAD
 					Notes = "Returns the Entity ID of the fishing hook floater that belongs to the player. Returns -1 if no floater is associated with the player. FIXME: Undefined behavior when the player has used multiple fishing rods simultanously.",
 				},
 				GetFlyingMaxSpeed =
+=======
+					Notes = "Returns true if the player's left hand is dominant.",
+				},
+				IsSatiated =
+>>>>>>> 3b47eaadb85ac42b70d35d03d919181830b40a41
 				{
 					Returns =
 					{
@@ -10880,7 +11168,15 @@ a_Player:OpenWindow(Window);
 							Type = "number",
 						},
 					},
+<<<<<<< HEAD
 					Notes = "Returns the maximum flying speed, relative to the default game flying speed. Defaults to 1, but plugins may modify it for faster or slower flying.",
+=======
+					Notes = "Returns true if the player is satiated (cannot eat).",
+				},
+				LoadRank =
+				{
+					Notes = "Reloads the player's rank, message visuals and permissions from the {{cRankManager}}, based on the player's current rank.",
+>>>>>>> 3b47eaadb85ac42b70d35d03d919181830b40a41
 				},
 				GetFoodExhaustionLevel =
 				{
@@ -10917,6 +11213,18 @@ a_Player:OpenWindow(Window);
 					Returns =
 					{
 						{
+<<<<<<< HEAD
+=======
+							Name = "BlockPos",
+							Type = "Vector3i",
+						},
+						{
+							Name = "BlockType",
+							Type = "number",
+						},
+						{
+							Name = "BlockMeta",
+>>>>>>> 3b47eaadb85ac42b70d35d03d919181830b40a41
 							Type = "number",
 						},
 					},
@@ -10931,7 +11239,22 @@ a_Player:OpenWindow(Window);
 							Type = "eGameMode",
 						},
 					},
+<<<<<<< HEAD
 					Notes = "Returns the player's gamemode. The player may have their gamemode unassigned, in which case they inherit the gamemode from the current {{cWorld|world}}.<br /> <b>NOTE:</b> Instead of comparing the value returned by this function to the gmXXX constants, use the IsGameModeXXX() functions. These functions handle the gamemode inheritance automatically.",
+=======
+					Notes = "Places a block while impersonating the player. The {{OnPlayerPlacingBlock|HOOK_PLAYER_PLACING_BLOCK}} hook is called before the placement, and if it succeeds, the block is placed and the {{OnPlayerPlacedBlock|HOOK_PLAYER_PLACED_BLOCK}} hook is called. Returns true iff the block is successfully placed.",
+				},
+				ReplaceOneEquippedItemTossRest =
+				{
+					Params =
+					{
+						{
+							Name = "Item",
+							Type = "cItem",
+						},
+					},
+					Notes = "Removes one item from the the current equipped item stack, and attempts to add the specified item stack back to the same slot. If it is not possible to place the item in the same slot, tries to place the specified item elsewhere in the inventory. If this is not possible, then any remaining items are tossed. If the currently equipped slot is empty, its contents are simply set to the given Item.",
+>>>>>>> 3b47eaadb85ac42b70d35d03d919181830b40a41
 				},
 				GetInventory =
 				{
@@ -10976,13 +11299,38 @@ a_Player:OpenWindow(Window);
 				},
 				GetName =
 				{
+<<<<<<< HEAD
 					Returns =
+=======
+>>>>>>> 3b47eaadb85ac42b70d35d03d919181830b40a41
 					{
+						Params =
 						{
+<<<<<<< HEAD
 							Type = "string",
+=======
+							{
+								Name = "Message",
+								Type = "string",
+							},
+>>>>>>> 3b47eaadb85ac42b70d35d03d919181830b40a41
 						},
+						Notes = "Sends the specified message to the player.",
 					},
+					{
+						Params =
+						{
+							{
+								Name = "Message",
+								Type = "cCompositeChat",
+							},
+						},
+						Notes = "Sends the {{cCompositeChat}} to the player, using a severity defined by the CompositeChat's MessageType.",
+					},
+<<<<<<< HEAD
 					Notes = "Returns the player's name",
+=======
+>>>>>>> 3b47eaadb85ac42b70d35d03d919181830b40a41
 				},
 				GetNormalMaxSpeed =
 				{
@@ -11131,7 +11479,22 @@ a_Player:OpenWindow(Window);
 					},
 					Notes = "Returns the currently open UI window. If the player doesn't have any UI window open, returns the inventory window.",
 				},
+<<<<<<< HEAD
 				GetXpLevel =
+=======
+				SetElytraFlight =
+				{
+					Params =
+					{
+						{
+							Name = "IsElytraFlying",
+							Type = "boolean",
+						},
+					},
+					Notes = "Sets whether the player is elytra flying or not.",
+				},
+				SetFlying =
+>>>>>>> 3b47eaadb85ac42b70d35d03d919181830b40a41
 				{
 					Returns =
 					{
@@ -11205,16 +11568,28 @@ a_Player:OpenWindow(Window);
 					},
 					Notes = "Returns true if the player has the specified skin part enabled",
 				},
+<<<<<<< HEAD
 				Heal =
+=======
+				SetLeftHanded =
+>>>>>>> 3b47eaadb85ac42b70d35d03d919181830b40a41
 				{
 					Params =
 					{
 						{
+<<<<<<< HEAD
 							Name = "HitPoints",
 							Type = "number",
 						},
 					},
 					Notes = "Heals the player by the specified amount of HPs. Only positive amounts are expected. Sends a health update to the client.",
+=======
+							Name = "IsLeftHanded",
+							Type = "boolean",
+						},
+					},
+					Notes = "Sets the dominant hand of the player.",
+>>>>>>> 3b47eaadb85ac42b70d35d03d919181830b40a41
 				},
 				IsEating =
 				{
@@ -11286,7 +11661,22 @@ a_Player:OpenWindow(Window);
 					},
 					Notes = "Returns true if the player is in the gmCreative gamemode, or has their gamemode unset and the world is a gmCreative world.",
 				},
+<<<<<<< HEAD
 				IsGameModeSpectator =
+=======
+				SpectateEntity =
+				{
+					Params =
+					{
+						{
+							Name = "Target",
+							Type = "cEntity",
+						},
+					},
+					Notes = "Spectates the target entity. Does not change the player's gamemode to spectator mode. When called with self or nil as the target, resets the spectation.",
+				},
+				TossEquippedItem =
+>>>>>>> 3b47eaadb85ac42b70d35d03d919181830b40a41
 				{
 					Returns =
 					{
@@ -11398,6 +11788,7 @@ a_Player:OpenWindow(Window);
 					},
 					Notes = "Places a block while impersonating the player. The {{OnPlayerPlacingBlock|HOOK_PLAYER_PLACING_BLOCK}} hook is called before the placement, and if it succeeds, the block is placed and the {{OnPlayerPlacedBlock|HOOK_PLAYER_PLACED_BLOCK}} hook is called. Returns true iff the block is successfully placed.",
 				},
+<<<<<<< HEAD
 				ReplaceOneEquippedItemTossRest =
 				{
 					Params =
@@ -11410,6 +11801,12 @@ a_Player:OpenWindow(Window);
 					Notes = "Removes one item from the the current equipped item stack, and attempts to add the specified item stack back to the same slot. If it is not possible to place the item in the same slot, tries to place the specified item elsewhere in the inventory. If this is not possible, then any remaining items are tossed. If the currently equipped slot is empty, its contents are simply set to the given Item.",
 				},
 				Respawn =
+=======
+			},
+			Constants =
+			{
+				MAX_FOOD_LEVEL =
+>>>>>>> 3b47eaadb85ac42b70d35d03d919181830b40a41
 				{
 					Notes = "Restores the health, extinguishes fire, makes visible and sends the Respawn packet.",
 				},
@@ -11557,7 +11954,26 @@ a_Player:OpenWindow(Window);
 					},
 					Notes = "Prepends Rose [WARN] / colours entire text (depending on ShouldUseChatPrefixes()) and sends message to player. Denotes that something concerning, such as plugin reload, is about to happen.",
 				},
+<<<<<<< HEAD
 				SendRotation =
+=======
+				BroadcastPlayerListsHeaderFooter =
+				{
+					Params =
+					{
+						{
+							Type = "cCompositeChat",
+							Name = "Header",
+						},
+						{
+							Type = "cCompositeChat",
+							Name = "Footer",
+						},
+					},
+					Desc = "Broadcasts the header and footer of the player list to all players.",
+				},
+				DoWithPlayerByUUID =
+>>>>>>> 3b47eaadb85ac42b70d35d03d919181830b40a41
 				{
 					Params =
 					{
@@ -11619,7 +12035,17 @@ a_Player:OpenWindow(Window);
 							Type = "boolean",
 						},
 					},
+<<<<<<< HEAD
 					Notes = "Sets the crouch state, broadcasts the change to other players.",
+=======
+					Returns =
+					{
+						{
+							Type = "boolean",
+						},
+					},
+					Notes = "Calls the given callback function for each player. The callback function has the following signature: <pre class=\"prettyprint lang-lua\">function Callback({{cPlayer|cPlayer}})</pre>",
+>>>>>>> 3b47eaadb85ac42b70d35d03d919181830b40a41
 				},
 				SetCurrentExperience =
 				{
@@ -11630,6 +12056,20 @@ a_Player:OpenWindow(Window);
 							Type = "number",
 						},
 					},
+<<<<<<< HEAD
+=======
+					Returns =
+					{
+						{
+							Type = "boolean",
+						},
+					},
+					Notes = "Calls the given callback function for each world. The callback function has the following signature: <pre class=\"prettyprint lang-lua\">function Callback({{cWorld|cWorld}})</pre>. Returns false if a callback aborts, otherwise true.",
+				},
+				Get =
+				{
+					IsStatic = true,
+>>>>>>> 3b47eaadb85ac42b70d35d03d919181830b40a41
 					Returns =
 					{
 						{
@@ -12376,7 +12816,26 @@ a_Player:OpenWindow(Window);
 					},
 					Notes = "Returns the amount of virtual RAM that the entire Cuberite process is using, in KiB. Negative if the OS doesn't support this query.",
 				},
+<<<<<<< HEAD
 				GetWebAdmin =
+=======
+				ScheduleTask =
+				{
+					Params =
+					{
+						{
+							Name = "DelayTicks",
+							Type = "number",
+						},
+						{
+							Name = "TaskFunction",
+							Type = "function",
+						},
+					},
+					Notes = "Queues the specified function to be executed in the server's tick thread after a the specified number of ticks. This enables operations to be queued for execution in the future. The function signature is <pre class=\"pretty-print lang-lua\">function({{cServer|Server}})</pre>All return values from the function are ignored. Note that it is unsafe to store references to Cuberite objects, such as entities, across from the caller to the task handler function; store the EntityID instead.",
+				},
+				SetMaxPlayers =
+>>>>>>> 3b47eaadb85ac42b70d35d03d919181830b40a41
 				{
 					Returns =
 					{
@@ -12858,7 +13317,11 @@ end
 					Params =
 					{
 						{
+<<<<<<< HEAD
 							Name = "MaxPlayers",
+=======
+							Name = "Port",
+>>>>>>> 3b47eaadb85ac42b70d35d03d919181830b40a41
 							Type = "number",
 						},
 					},
@@ -12938,7 +13401,12 @@ local CompressedString = cStringCompression.CompressStringGZIP("DataToCompress")
 					Returns =
 					{
 						{
+<<<<<<< HEAD
 							Type = "string",
+=======
+							Name = "Port",
+							Type = "number",
+>>>>>>> 3b47eaadb85ac42b70d35d03d919181830b40a41
 						},
 					},
 					Notes = "Compresses data in a string using ZLIB. Factor 0 is no compression and factor 9 is maximum compression.",
@@ -13550,6 +14018,7 @@ end
 			Desc = "",
 			Functions =
 			{
+<<<<<<< HEAD
 
 			},
 		},
@@ -13568,9 +14037,57 @@ end
 				<p>
 				Windows also have numeric properties, these are used to set the progressbars for furnaces or the XP
 				costs for enchantment tables.
+=======
+				WindowType =
+				{
+					Include = { "wt.*" },
+				}
+			},  -- ConstantGroups
+		},
+		StatisticsManager =
+		{
+			Desc = [[
+				This class provides a store for various types of player statistics. The store will be read and sent to the client when the Statistics button is pressed.
+			]],
+			Variables =
+			{
+				Custom =
+				{
+					Type = "Map of {{CustomStatistic}} to number",
+					Notes = "Gets or sets the value of a custom statistic.",
+				},
+			},
+			AdditionalInfo =
+			{
+				{
+					Header = "Example usage",
+					Contents = [[
+						Each store is a table, keyed by the statistic that the entry tracks, with value typically representing the number of times the event happened:
+<pre class="prettyprint lang-lua">
+function ModifyPlayerFurnaceInteractions(Player)
+	local Statistics = Player:GetStatistics()
+
+	if (Statistics.Custom[CustomStatistic.WalkOneCm] > 10) then
+		Statistics.Custom[CustomStatistic.InteractWithFurnace] = 1337
+	end
+
+	-- Next time the player presses Statistics they will see the updated value for furnace interactions.
+end
+</pre>
+					]],
+				},
+			},
+		},
+
+		BannerPattern =
+		{
+			Desc = [[
+				An enumeration of banner patterns.
+>>>>>>> 3b47eaadb85ac42b70d35d03d919181830b40a41
 			]],
 			Functions =
 			{
+<<<<<<< HEAD
 				GetSlot =
 				{
 					Params =
@@ -13593,6 +14110,254 @@ end
 					Notes = "Returns the item at the specified slot for the specified player. Returns nil and logs to server console on error.",
 				},
 				GetWindowID =
+=======
+				BottomStripe =
+				{
+					Notes = "A base pattern."
+				},
+				TopStripe =
+				{
+					Notes = "A chief pattern."
+				},
+				LeftStripe =
+				{
+					Notes = "A pale dexter pattern."
+				},
+				RightStripe =
+				{
+					Notes = "A pale sinister pattern."
+				},
+				CenterStripeVertical =
+				{
+					Notes = "A pale pattern."
+				},
+				MiddleStripeHorizontal =
+				{
+					Notes = "A fess pattern."
+				},
+				DownRightStripe =
+				{
+					Notes = "A bend pattern."
+				},
+				DownLeftStripe =
+				{
+					Notes = "A bend sinister pattern."
+				},
+				SmallVerticalStripes =
+				{
+					Notes = "A paly pattern."
+				},
+				DiagonalCross =
+				{
+					Notes = "A saltire pattern."
+				},
+				SquareCross =
+				{
+					Notes = "A cross pattern."
+				},
+				LeftOfDiagonal =
+				{
+					Notes = "A per bend sinister pattern."
+				},
+				RightOfUpsideDownDiagonal =
+				{
+					Notes = "A per bend pattern."
+				},
+				LeftOfUpsideDownDiagonal =
+				{
+					Notes = "A per bend inverted pattern."
+				},
+				RightOfDiagonal =
+				{
+					Notes = "A per bend sinister inverted pattern."
+				},
+				VerticalHalfLeft =
+				{
+					Notes = "A per pale pattern."
+				},
+				VerticalHalfRight =
+				{
+					Notes = "A per pale inverted pattern."
+				},
+				HorizontalHalfTop =
+				{
+					Notes = "A per fess pattern."
+				},
+				HorizontalHalfBottom =
+				{
+					Notes = "A per fess inverted pattern."
+				},
+				BottomLeftCorner =
+				{
+					Notes = "A base dexter canton pattern."
+				},
+				BottomRightCorner =
+				{
+					Notes = "A base sinister canton pattern."
+				},
+				TopLeftCorner =
+				{
+					Notes = "A chief dexter canton pattern."
+				},
+				TopRightCorner =
+				{
+					Notes = "A chief sinister canton pattern."
+				},
+				BottomTriangle =
+				{
+					Notes = "A chevron pattern."
+				},
+				TopTriangle =
+				{
+					Notes = "An inverted chevron pattern."
+				},
+				BottomTriangleSawtooth =
+				{
+					Notes = "A base indented pattern."
+				},
+				TopTriangleSawtooth =
+				{
+					Notes = "A chief indented pattern."
+				},
+				MiddleCircle =
+				{
+					Notes = "A roundel pattern."
+				},
+				MiddleRhombus =
+				{
+					Notes = "A lozenge pattern."
+				},
+				Border =
+				{
+					Notes = "A bordure pattern."
+				},
+				CurlyBorder =
+				{
+					Notes = "A bordure indented pattern."
+				},
+				Brick =
+				{
+					Notes = "A field masoned pattern."
+				},
+				Gradient =
+				{
+					Notes = "A gradient pattern."
+				},
+				GradientUpsideDown =
+				{
+					Notes = "A base gradient pattern."
+				},
+				Creeper =
+				{
+					Notes = "A creeper charge pattern."
+				},
+				Skull =
+				{
+					Notes = "A skull charge pattern."
+				},
+				Flower =
+				{
+					Notes = "A flower charge pattern."
+				},
+				Mojang =
+				{
+					Notes = "A... thing."
+				},
+				Globe =
+				{
+					Notes = "A globe."
+				},
+				Piglin =
+				{
+					Notes = "A snoot."
+				},
+			},
+		},
+		BossBarColor =
+		{
+			Desc = [[
+				An enumeration of boss bar display colours which can be used with {{cClientHandle#SendBossBarAdd|SendBossBarAdd}}.
+			]],
+			Constants =
+			{
+				Pink =
+				{
+					Notes = "A pink boss bar."
+				},
+				Blue =
+				{
+					Notes = "A blue boss bar."
+				},
+				Red =
+				{
+					Notes = "A red boss bar."
+				},
+				Green =
+				{
+					Notes = "A green boss bar."
+				},
+				Yellow =
+				{
+					Notes = "A yellow boss bar."
+				},
+				Purple =
+				{
+					Notes = "A purple boss bar."
+				},
+				White =
+				{
+					Notes = "A white boss bar."
+				},
+			},
+		},
+		BossBarDivisionType =
+		{
+			Desc = [[
+				An enumeration of boss bar division types which can be used with {{cClientHandle#SendBossBarAdd|SendBossBarAdd}}.
+				These constants control the number of notches the bar itself renders with.
+			]],
+			Constants =
+			{
+				None =
+				{
+					Notes = "A completely smooth boss bar."
+				},
+				SixNotches =
+				{
+					Notes = "A six-notch'd boss bar."
+				},
+				TenNotches =
+				{
+					Notes = "A ten-notch'd boss bar."
+				},
+				TwelveNotches =
+				{
+					Notes = "A twelve notch'd boss bar."
+				},
+				TwentyNotches =
+				{
+					Notes = "A twenty notch'd boss bar."
+				},
+			},
+		},
+		EffectID =
+		{
+			Desc = [[
+				An enumeration of sound and particle effects which can be used with
+				{{cWorld#BroadcastSoundParticleEffect|BroadcastSoundParticleEffect}}.
+			]],
+			Constants =
+			{
+				SFX_RANDOM_DISPENSER_DISPENSE =
+				{
+					Notes = "Sound of droper/dispenser releasing an item",
+				},
+				SFX_RANDOM_DISPENSER_DISPENSE_FAIL =
+				{
+					Notes = "Sound of a droper/dispenser activated without items",
+				},
+				SFX_RANDOM_DISPENSER_SHOOT =
+>>>>>>> 3b47eaadb85ac42b70d35d03d919181830b40a41
 				{
 					Returns =
 					{
@@ -13998,6 +14763,7 @@ end
 				},
 			},
 		},
+<<<<<<< HEAD
 		BossBarColor =
 		{
 			Desc = [[
@@ -14062,6 +14828,601 @@ end
 				TwentyNotches =
 				{
 					Notes = "A twenty notch'd boss bar."
+=======
+		CustomStatistic =
+		{
+			Desc = [[
+				An enumeration of statistics of the custom type to be used with the {{StatisticsManager#Custom|Custom}} statistics store.
+			]],
+			Constants =
+			{
+				AnimalsBred =
+				{
+					Notes = "The number of times the player bred two mobs.",
+				},
+				AviateOneCm =
+				{
+					Notes = "The total distance travelled by elytra.",
+				},
+				BellRing =
+				{
+					Notes = "The number of times the player has rung a bell.",
+				},
+				BoatOneCm =
+				{
+					Notes = "The total distance travelled by boats.",
+				},
+				CleanArmor =
+				{
+					Notes = "The number of dyed leather armors washed with a cauldron.",
+				},
+				CleanBanner =
+				{
+					Notes = "The number of banner patterns washed with a cauldron.",
+				},
+				CleanShulkerBox =
+				{
+					Notes = "The number of times the player has washed a Shulker Box with a cauldron.",
+				},
+				ClimbOneCm =
+				{
+					Notes = "The total distance travelled up ladders or vines.",
+				},
+				CrouchOneCm =
+				{
+					Notes = "The total distance walked while sneaking.",
+				},
+				DamageAbsorbed =
+				{
+					Notes = "The amount of damage the player has absorbed in tenths of 1.",
+				},
+				DamageBlockedByShield =
+				{
+					Notes = "The amount of damage the player has blocked with a shield in tenths of 1.",
+				},
+				DamageDealt =
+				{
+					Notes = "The amount of damage the player has dealt in tenths 1. Includes only melee attacks.",
+				},
+				DamageDealtAbsorbed =
+				{
+					Notes = "The amount of damage the player has dealt that was absorbed, in tenths of 1.",
+				},
+				DamageDealtResisted =
+				{
+					Notes = "The amount of damage the player has dealt that was resisted, in tenths of 1.",
+				},
+				DamageResisted =
+				{
+					Notes = "The amount of damage the player has resisted in tenths of 1.",
+				},
+				DamageTaken =
+				{
+					Notes = "The amount of damage the player has taken in tenths of 1.",
+				},
+				Deaths =
+				{
+					Notes = "The number of times the player died.",
+				},
+				Drop =
+				{
+					Notes = "The number of items the drop key was pressed.",
+				},
+				EatCakeSlice =
+				{
+					Notes = "The number of cake slices eaten.",
+				},
+				EnchantItem =
+				{
+					Notes = "The number of items enchanted.",
+				},
+				FallOneCm =
+				{
+					Notes = "The total distance fallen.",
+				},
+				FillCauldron =
+				{
+					Notes = "The number of times the player filled cauldrons with water buckets.",
+				},
+				FishCaught =
+				{
+					Notes = "The number of fish caught.",
+				},
+				FlyOneCm =
+				{
+					Notes = "The total distance flown.",
+				},
+				HorseOneCm =
+				{
+					Notes = "The total distance travelled by horses.",
+				},
+				InspectDispenser =
+				{
+					Notes = "The number of times interacted with dispensers.",
+				},
+				InspectDropper =
+				{
+					Notes = "The number of times interacted with droppers.",
+				},
+				InspectHopper =
+				{
+					Notes = "The number of times interacted with hoppers.",
+				},
+				InteractWithAnvil =
+				{
+					Notes = "The number of times interacted with anvils.",
+				},
+				InteractWithBeacon =
+				{
+					Notes = "The number of times interacted with beacons.",
+				},
+				InteractWithBlastFurnace =
+				{
+					Notes = "The number of times interacted with Blast Furnaces.",
+				},
+				InteractWithBrewingstand =
+				{
+					Notes = "The number of times interacted with brewing stands.",
+				},
+				InteractWithCampfire =
+				{
+					Notes = "The number of times interacted with campfires.",
+				},
+				InteractWithCartographyTable =
+				{
+					Notes = "The number of times interacted with cartography tables.",
+				},
+				InteractWithCraftingTable =
+				{
+					Notes = "The number of times interacted with crafting tables.",
+				},
+				InteractWithFurnace =
+				{
+					Notes = "The number of times interacted with furnaces.",
+				},
+				InteractWithGrindstone =
+				{
+					Notes = "The number of times interacted with grindstones.",
+				},
+				InteractWithLectern =
+				{
+					Notes = "The number of times interacted with lecterns.",
+				},
+				InteractWithLoom =
+				{
+					Notes = "The number of times interacted with looms.",
+				},
+				InteractWithSmithingTable =
+				{
+					Notes = "The number of times interacted with smithing tables.",
+				},
+				InteractWithSmoker =
+				{
+					Notes = "The number of times interacted with smokers.",
+				},
+				InteractWithStonecutter =
+				{
+					Notes = "The number of times interacted with stonecutters.",
+				},
+				JunkFished =
+				{
+					Notes = "The amount of junk fished.",
+				},
+				Jump =
+				{
+					Notes = "The number of jumps performed.",
+				},
+				LeaveGame =
+				{
+					Notes = "The number of times disconnected from the server.",
+				},
+				MinecartOneCm =
+				{
+					Notes = "The total distance travelled by minecarts.",
+				},
+				MobKills =
+				{
+					Notes = "The number of mobs the player killed.",
+				},
+				OpenBarrel =
+				{
+					Notes = "The number of times the player has opened a barrel.",
+				},
+				OpenChest =
+				{
+					Notes = "The number of times the player opened chests.",
+				},
+				OpenEnderchest =
+				{
+					Notes = "The number of times the player opened ender chests.",
+				},
+				OpenShulkerBox =
+				{
+					Notes = "The number of times the player has opened a shulker box.",
+				},
+				PigOneCm =
+				{
+					Notes = "The total distance travelled by pigs via saddles.",
+				},
+				PlayNoteblock =
+				{
+					Notes = "The number of note blocks hit.",
+				},
+				PlayOneMinute =
+				{
+					Notes = "The total time played.",
+				},
+				PlayRecord =
+				{
+					Notes = "The number of music discs played on a jukebox.",
+				},
+				PlayerKills =
+				{
+					Notes = "The number of players the player directly killed.",
+				},
+				PotFlower =
+				{
+					Notes = "The number of plants potted into flower pots.",
+				},
+				RaidTrigger =
+				{
+					Notes = "The number of times the player has triggered a raid.",
+				},
+				RaidWin =
+				{
+					Notes = "The number of times the player has won a raid.",
+				},
+				SleepInBed =
+				{
+					Notes = "The number of times the player has slept in a bed.",
+				},
+				SneakTime =
+				{
+					Notes = "The time the player has held down the sneak button.",
+				},
+				SprintOneCm =
+				{
+					Notes = "The total distance sprinted.",
+				},
+				StriderOneCm =
+				{
+					Notes = "The total distance travelled by striders via saddles.",
+				},
+				SwimOneCm =
+				{
+					Notes = "The total distance swum.",
+				},
+				TalkedToVillager =
+				{
+					Notes = "The number of times interacted with villagers (opened the trading GUI).",
+				},
+				TargetHit =
+				{
+					Notes = "The number of times the player has shot a target block.",
+				},
+				TimeSinceDeath =
+				{
+					Notes = "The time since the player's last death.",
+				},
+				TimeSinceRest =
+				{
+					Notes = "The time since the player's last rest. This is used to spawn phantoms.",
+				},
+				TradedWithVillager =
+				{
+					Notes = "The number of times traded with villagers.",
+				},
+				TreasureFished =
+				{
+					Notes = "The number of treasures fished.",
+				},
+				TriggerTrappedChest =
+				{
+					Notes = "The number of times the player opened trapped chests.",
+				},
+				TuneNoteblock =
+				{
+					Notes = "The number of times interacted with note blocks.",
+				},
+				UseCauldron =
+				{
+					Notes = "The number of times the player took water from cauldrons with glass bottles.",
+				},
+				WalkOnWaterOneCm =
+				{
+					Notes = "The distance covered while bobbing up and down over water.",
+				},
+				WalkOneCm =
+				{
+					Notes = "The total distance walked.",
+				},
+				WalkUnderWaterOneCm =
+				{
+					Notes = "The total distance walked underwater.",
+				},
+			},
+		},
+		Globals =
+		{
+			Desc = [[
+				These functions are available directly, without a class instance. Any plugin can call them at any
+				time.
+			]],
+			Functions =
+			{
+				AddFaceDirection =
+				{
+					{
+						Params =
+						{
+							{
+								Name = "BlockX",
+								Type = "number",
+							},
+							{
+								Name = "BlockY",
+								Type = "number",
+							},
+							{
+								Name = "BlockZ",
+								Type = "number",
+							},
+							{
+								Name = "BlockFace",
+								Type = "eBlockFace",
+							},
+							{
+								Name = "IsInverse",
+								Type = "boolean",
+								IsOptional = true,
+							},
+						},
+						Returns =
+						{
+							{
+								Name = "BlockX",
+								Type = "number",
+							},
+							{
+								Name = "BlockY",
+								Type = "number",
+							},
+							{
+								Name = "BlockZ",
+								Type = "number",
+							},
+						},
+						Notes = "Returns the coords of a block adjacent to the specified block through the specified {{Globals#BlockFaces|face}}",
+					},
+					{
+						Params =
+						{
+							{
+								Name = "BlockPos",
+								Type = "Vector3i",
+							},
+							{
+								Name = "BlockFace",
+								Type = "eBlockFace",
+							},
+							{
+								Name = "IsInverse",
+								Type = "boolean",
+								IsOptional = true,
+							},
+						},
+						Returns =
+						{
+							{
+								Name = "BlockPos",
+								Type = "Vector3i",
+							},
+						},
+						Notes = "Returns the coords of a block adjacent to the specified block through the specified {{Globals#BlockFaces|face}}",
+					},
+				},
+				Base64Decode =
+				{
+					Params =
+					{
+						{
+							Name = "Input",
+							Type = "string",
+						},
+					},
+					Returns =
+					{
+						{ Type = "string" },
+					},
+					Notes = "Decodes a Base64-encoded string into the raw data.",
+				},
+				Base64Encode =
+				{
+					Params =
+					{
+						{
+							Name = "Input",
+							Type = "string",
+						},
+					},
+					Returns =
+					{
+						{ Type = "string" },
+					},
+					Notes = "Encodes a string into Base64.",
+				},
+				BiomeToString =
+				{
+					Params =
+					{
+						{
+							Name = "Biome",
+							Type = "EMCSBiome",
+						},
+					},
+					Returns =
+					{
+						{ Type = "string" },
+					},
+					Notes = "Translates biome enum into biome string. Returns empty string on failure (unknown biome).",
+				},
+				BlockFaceToString =
+				{
+					Params =
+					{
+						{
+							Name = "eBlockFace",
+							Type = "eBlockFace",
+						},
+					},
+					Returns =
+					{
+						{
+							Type = "string",
+						},
+					},
+					Notes = "Returns the string representation of the {{Globals#BlockFaces|eBlockFace}} constant. Uses the axis-direction-based names, such as BLOCK_FACE_XP.",
+				},
+				BlockStringToType =
+				{
+					Params =
+					{
+						{
+							Name = "BlockTypeString",
+							Type = "string",
+						},
+					},
+					Returns =
+					{
+						{
+							Name = "BLOCKTYPE",
+							Type = "number",
+						},
+					},
+					Notes = "Returns the block type parsed from the given string",
+				},
+				Clamp =
+				{
+					Params =
+					{
+						{
+							Name = "Number",
+							Type = "number",
+						},
+						{
+							Name = "Min",
+							Type = "number",
+						},
+						{
+							Name = "Max",
+							Type = "number",
+						},
+					},
+					Returns =
+					{
+						{
+							Type = "number",
+						},
+					},
+					Notes = "Clamp the number to the specified range.",
+				},
+				ClickActionToString =
+				{
+					Params =
+					{
+						{
+							Name = "ClickAction",
+							Type = "eClickAction",
+						},
+					},
+					Returns =
+					{
+						{
+							Type = "string",
+						},
+					},
+					Notes = "Returns a string description of the ClickAction enumerated value",
+				},
+				DamageTypeToString =
+				{
+					Params =
+					{
+						{
+							Name = "DamageType",
+							Type = "eDamageType",
+						},
+					},
+					Returns =
+					{
+						{
+							Type = "string",
+						},
+					},
+					Notes = "Converts the {{Globals#eDamageType|DamageType}} to a string representation ",
+				},
+				DimensionToString =
+				{
+					Params =
+					{
+						{
+							Name = "Dimension",
+							Type = "eDimension",
+						},
+					},
+					Returns =
+					{
+						{
+							Type = "string",
+						},
+					},
+					Notes = "Converts an {{Globals#eDimension|eDimension}} to a string value. Returns Overworld on failure.",
+				},
+				EscapeString =
+				{
+					Params =
+					{
+						{
+							Name = "Input",
+							Type = "string",
+						},
+					},
+					Returns =
+					{
+						{
+							Type = "string",
+						},
+					},
+					Notes = "Returns a copy of the string with all quotes and backslashes escaped by a backslash",
+				},
+				GetIniItemSet =
+				{
+					Params =
+					{
+						{
+							Name = "IniFile",
+							Type = "cIniFile",
+						},
+						{
+							Name = "SectionName",
+							Type = "string",
+						},
+						{
+							Name = "KeyName",
+							Type = "string",
+						},
+						{
+							Name = "DefaultValue",
+							Type = "string",
+						},
+					},
+					Returns =
+					{
+						{
+							Type = "cItem",
+						},
+					},
+					Notes = "Returns the item that has been read from the specified INI file value. If the value is not present in the INI file, the DefaultValue is stored in the file and parsed as the result. Returns empty item if the value cannot be parsed. ",
+>>>>>>> 3b47eaadb85ac42b70d35d03d919181830b40a41
 				},
 			},
 		},
@@ -14097,7 +15458,45 @@ end
 				{
 					Notes = "Sound of an iron door opening",
 				},
+<<<<<<< HEAD
 				SFX_RANDOM_WOODEN_DOOR_OPEN =
+=======
+				IsBiomeMountain =
+				{
+					Params =
+					{
+						{
+							Name = "Biome",
+							Type = "EMCSBiome",
+						}
+					},
+					Returns =
+					{
+						{
+							Type = "boolean",
+						},
+					},
+					Notes = "Returns true if the biome is mountainous (mutations of the extreme hills biome)."
+				},
+				IsBiomeMesa =
+				{
+					Params =
+					{
+						{
+							Name = "Biome",
+							Type = "EMCSBiome",
+						}
+					},
+					Returns =
+					{
+						{
+							Type = "boolean",
+						},
+					},
+					Notes = "Returns true if the biome is a type of Mesa (mutations of the Mesa biome)."
+				},
+				IsValidBlock =
+>>>>>>> 3b47eaadb85ac42b70d35d03d919181830b40a41
 				{
 					Notes = "Sound of a wooden door opening"
 				},
@@ -14119,18 +15518,84 @@ end
 				},
 				SFX_RANDOM_IRON_DOOR_CLOSE =
 				{
+<<<<<<< HEAD
 					Notes = "Sound of an iron door closing",
+=======
+					{
+						Params =
+						{
+							{
+								Name = "Message",
+								Type = "string",
+							},
+							{
+								Name = "SuppressPluginNamePrefix",
+								Type = "boolean",
+								IsOptional = true,
+							},
+						},
+						Notes = "Logs a text into the server console and logfile using 'normal' severity (gray text).",
+					},
+					{
+						Params =
+						{
+							{
+								Name = "Message",
+								Type = "cCompositeChat",
+							},
+							{
+								Name = "SuppressPluginNamePrefix",
+								Type = "boolean",
+								IsOptional = true,
+							},
+						},
+						Notes = "Logs the {{cCompositeChat}}'s human-readable text into the server console, using a severity defined by the CompositeChat's MessageType.",
+					},
+>>>>>>> 3b47eaadb85ac42b70d35d03d919181830b40a41
 				},
 				SFX_RANDOM_WOODEN_DOOR_CLOSE =
 				{
+<<<<<<< HEAD
 					Notes = "Sound of a wooden door closing",
+=======
+					Params =
+					{
+						{
+							Name = "Message",
+							Type = "string",
+						},
+						{
+							Name = "SuppressPluginNamePrefix",
+							Type = "boolean",
+							IsOptional = true,
+						},
+					},
+					Notes = "Logs a text into the server console and logfile using 'error' severity (black text on red background).",
+>>>>>>> 3b47eaadb85ac42b70d35d03d919181830b40a41
 				},
 				SFX_RANDOM_WOODEN_TRAPDOOR_CLOSE =
 				{
+<<<<<<< HEAD
 					Notes = "Sound of a trapdoor closing",
+=======
+					Params =
+					{
+						{
+							Name = "Message",
+							Type = "string",
+						},
+						{
+							Name = "SuppressPluginNamePrefix",
+							Type = "boolean",
+							IsOptional = true,
+						},
+					},
+					Notes = "Logs a text into the server console and logfile using 'info' severity (yellow text).",
+>>>>>>> 3b47eaadb85ac42b70d35d03d919181830b40a41
 				},
 				SFX_RANDOM_FENCE_GATE_CLOSE =
 				{
+<<<<<<< HEAD
 					Notes = "Sound of a fence gate closing",
 				},
 				SFX_MOB_GHAST_WARN =
@@ -15674,6 +17139,641 @@ end
 				caUnknown =
 				{
 					Notes = "Unknown click action"
+=======
+					Params =
+					{
+						{
+							Name = "Message",
+							Type = "string",
+						},
+						{
+							Name = "SuppressPluginNamePrefix",
+							Type = "boolean",
+							IsOptional = true,
+						},
+					},
+					Notes = "Logs a text into the server console and logfile using 'warning' severity (red text); OBSOLETE, use LOGWARNING() instead.",
+>>>>>>> 3b47eaadb85ac42b70d35d03d919181830b40a41
+				},
+				dtAdmin =
+				{
+<<<<<<< HEAD
+					Notes = "Damage applied by an admin command"
+				},
+				dtArrow =
+				{
+					Notes = "Damage received by being attacked by a projectile, possibly from a mob"
+				},
+				dtArrowAttack =
+				{
+					Notes = "Damage received by being attacked by a projectile, possibly from a mob"
+				},
+				dtAttack =
+				{
+					Notes = "Damage recieved by being attacked by a mob"
+				},
+				dtBurning =
+				{
+					Notes = "Damage from being on fire"
+				},
+				dtCacti =
+				{
+					Notes = "Damage from contact with a cactus block"
+				},
+				dtCactus =
+				{
+					Notes = "Damage from contact with a cactus block"
+				},
+				dtCactusContact =
+				{
+					Notes = "Damage from contact with a cactus block"
+				},
+				dtCactuses =
+				{
+					Notes = "Damage from contact with a cactus block"
+				},
+				dtMagmaContact =
+				{
+					Notes = "Damage from contact with a magma block"
+				},
+				dtMagma =
+				{
+					Notes = "Damage from contact with a magma block"
+				},
+				dtDrown =
+				{
+					Notes = "Damage received by drowning in water / lava"
+				},
+				dtDrowning =
+				{
+					Notes = "Damage received by drowning in water / lava"
+				},
+				dtEnderPearl =
+				{
+					Notes = "Damage received by throwing an ender pearl and being teleported by it"
+				},
+				dtEntityAttack =
+				{
+					Notes = "Damage recieved by being attacked by a mob"
+				},
+				dtEnvironment =
+				{
+					Notes = "Damage dealt to mobs from environment: enderman in rain, snow golem in desert"
+				},
+				dtExplosion =
+				{
+					Notes = "Damage applied by an explosion"
+				},
+				dtFall =
+				{
+					Notes = "Damage from falling down. Dealt when hitting the ground"
+				},
+				dtFalling =
+				{
+					Notes = "Damage from falling down. Dealt when hitting the ground"
+				},
+				dtFireContact =
+				{
+					Notes = "Damage received by standing inside a fire block"
+				},
+				dtHunger =
+				{
+					Notes = "Damage received from hunger"
+				},
+				dtInFire =
+				{
+					Notes = "Damage received by standing inside a fire block"
+				},
+				dtInVoid =
+				{
+					Notes = "Damage received by falling into the Void (Y < 0)"
+				},
+				dtLava =
+				{
+					Notes = "Damage received by a contact with a lava block"
+				},
+				dtLavaContact =
+				{
+					Notes = "Damage received by a contact with a lava block"
+				},
+				dtLightning =
+				{
+					Notes = "Damage from being hit by a lightning strike"
+				},
+				dtMob =
+				{
+					Notes = "Damage received by being attacked by a mob"
+				},
+				dtMobAttack =
+				{
+					Notes = "Damage received by being attacked by a mob"
+				},
+				dtOnFire =
+				{
+					Notes = "Damage from being on fire"
+				},
+				dtPawnAttack =
+				{
+					Notes = "Damage received by being attacked by a mob"
+				},
+				dtPlugin =
+				{
+					Notes = "Damage applied by an admin command"
+				},
+				dtPoison =
+				{
+					Notes = "Damage applied by the poison effect"
+				},
+				dtPoisoning =
+				{
+					Notes = "Damage applied by the poison effect"
+				},
+				dtPotionOfHarming =
+				{
+					Notes = "Damage applied by the potion of harming"
+				},
+				dtProjectile =
+				{
+					Notes = "Damage received by being attacked by a projectile, possibly from a mob"
+				},
+				dtRangedAttack =
+				{
+					Notes = "Damage received by being attacked by a projectile, possibly from a mob"
+				},
+				dtStarvation =
+				{
+					Notes = "Damage received from hunger"
+				},
+				dtStarving =
+				{
+					Notes = "Damage received from hunger"
+				},
+				dtSuffocating =
+				{
+					Notes = "Damage from suffocating inside a block"
+				},
+				dtSuffocation =
+				{
+					Notes = "Damage from suffocating inside a block"
+				},
+				dtWither =
+				{
+					Notes = "Damage from the wither effect"
+				},
+				dtWithering =
+				{
+					Notes = "Damage from the wither effect"
+				},
+				E_BLOCK_ACACIA_DOOR =
+				{
+					Notes = "The blocktype for acacia door"
+				},
+				E_BLOCK_ACACIA_FENCE =
+				{
+					Notes = "The blocktype for acacia fence"
+				},
+				E_BLOCK_ACACIA_FENCE_GATE =
+				{
+					Notes = "The blocktype for acacia fence gate"
+				},
+				E_BLOCK_ACACIA_WOOD_STAIRS =
+				{
+					Notes = "The blocktype for acacia wood stairs"
+				},
+				E_BLOCK_ACTIVATOR_RAIL =
+				{
+					Notes = "The blocktype for activator rail"
+				},
+				E_BLOCK_ACTIVE_COMPARATOR =
+				{
+					Notes = "The blocktype for active comparator"
+				},
+				E_BLOCK_AIR =
+				{
+					Notes = "The blocktype for air"
+				},
+				E_BLOCK_ANVIL =
+				{
+					Notes = "The blocktype for anvil"
+				},
+				E_BLOCK_ANVIL_HIGH_DAMAGE =
+				{
+					Notes = "The blocktype for anvil high damage"
+				},
+				E_BLOCK_ANVIL_LOW_DAMAGE =
+				{
+					Notes = "The blocktype for anvil low damage"
+				},
+				E_BLOCK_ANVIL_NO_DAMAGE =
+				{
+					Notes = "The blocktype for anvil no damage"
+				},
+				E_BLOCK_ANVIL_X =
+				{
+					Notes = "The blocktype for anvil x"
+				},
+				E_BLOCK_ANVIL_Z =
+				{
+					Notes = "The blocktype for anvil z"
+				},
+				E_BLOCK_BARRIER =
+				{
+					Notes = "The blocktype for barrier"
+				},
+				E_BLOCK_BEACON =
+				{
+					Notes = "The blocktype for beacon"
+				},
+				E_BLOCK_BED =
+				{
+					Notes = "The blocktype for bed"
+				},
+				E_BLOCK_BEDROCK =
+				{
+					Notes = "The blocktype for bedrock"
+				},
+				E_BLOCK_BED_BED_HEAD =
+				{
+					Notes = "The blocktype for bed bed head"
+				},
+				E_BLOCK_BED_OCCUPIED =
+				{
+					Notes = "The blocktype for bed occupied"
+				},
+				E_BLOCK_BED_XM =
+				{
+					Notes = "The blocktype for bed xm"
+				},
+				E_BLOCK_BED_XP =
+				{
+					Notes = "The blocktype for bed xp"
+				},
+				E_BLOCK_BED_ZM =
+				{
+					Notes = "The blocktype for bed zm"
+				},
+				E_BLOCK_BED_ZP =
+				{
+					Notes = "The blocktype for bed zp"
+				},
+				E_BLOCK_BEETROOTS =
+				{
+					Notes = "The blocktype for beetroots"
+				},
+				E_BLOCK_BIG_FLOWER =
+				{
+					Notes = "The blocktype for big flower"
+				},
+				E_BLOCK_BIRCH_DOOR =
+				{
+					Notes = "The blocktype for birch door"
+				},
+				E_BLOCK_BIRCH_FENCE =
+				{
+					Notes = "The blocktype for birch fence"
+				},
+				E_BLOCK_BIRCH_FENCE_GATE =
+				{
+					Notes = "The blocktype for birch fence gate"
+				},
+				E_BLOCK_BIRCH_WOOD_STAIRS =
+				{
+					Notes = "The blocktype for birch wood stairs"
+				},
+				E_BLOCK_BLACK_GLAZED_TERRACOTTA =
+				{
+					Notes = "The blocktype for black terracotta"
+				},
+				E_BLOCK_BLACK_SHULKER_BOX =
+				{
+					Notes = "The blocktype for black shulker box"
+				},
+				E_BLOCK_BLOCK_OF_COAL =
+				{
+					Notes = "The blocktype for block of coal"
+				},
+				E_BLOCK_BLOCK_OF_REDSTONE =
+				{
+					Notes = "The blocktype for block of redstone"
+				},
+				E_BLOCK_BLUE_GLAZED_TERRACOTTA =
+				{
+					Notes = "The blocktype for blue glazed terracotta"
+				},
+				E_BLOCK_BLUE_SHULKER_BOX =
+				{
+					Notes = "The blocktype for blue shulker box"
+				},
+				E_BLOCK_BONE_BLOCK =
+				{
+					Notes = "The blocktype for bone block"
+				},
+				E_BLOCK_BOOKCASE =
+				{
+					Notes = "The blocktype for bookcase"
+				},
+				E_BLOCK_BREWING_STAND =
+				{
+					Notes = "The blocktype for brewing stand"
+				},
+				E_BLOCK_BRICK =
+				{
+					Notes = "The blocktype for brick"
+=======
+					Params =
+					{
+						{
+							Name = "Message",
+							Type = "string",
+						},
+						{
+							Name = "SuppressPluginNamePrefix",
+							Type = "boolean",
+							IsOptional = true,
+						},
+					},
+					Notes = "Logs a text into the server console and logfile using 'warning' severity (red text).",
+>>>>>>> 3b47eaadb85ac42b70d35d03d919181830b40a41
+				},
+				E_BLOCK_BRICK_STAIRS =
+				{
+					Notes = "The blocktype for brick stairs"
+				},
+				E_BLOCK_BROWN_GLAZED_TERRACOTTA =
+				{
+					Notes = "The blocktype for brown glazed terracotta"
+				},
+				E_BLOCK_BROWN_MUSHROOM =
+				{
+					Notes = "The blocktype for brown mushroom"
+				},
+				E_BLOCK_BROWN_SHULKER_BOX =
+				{
+					Notes = "The blocktype for brown shulker box"
+				},
+				E_BLOCK_BURNING_FURNACE =
+				{
+					Notes = "The blocktype for burning furnace"
+				},
+				E_BLOCK_BUTTON_PRESSED =
+				{
+					Notes = "The blocktype for button pressed"
+				},
+				E_BLOCK_BUTTON_XM =
+				{
+					Notes = "The blocktype for button xm"
+				},
+				E_BLOCK_BUTTON_XP =
+				{
+					Notes = "The blocktype for button xp"
+				},
+				E_BLOCK_BUTTON_YM =
+				{
+					Notes = "The blocktype for button ym"
+				},
+				E_BLOCK_BUTTON_YP =
+				{
+					Notes = "The blocktype for button yp"
+				},
+				E_BLOCK_BUTTON_ZM =
+				{
+					Notes = "The blocktype for button zm"
+				},
+				E_BLOCK_BUTTON_ZP =
+				{
+					Notes = "The blocktype for button zp"
+				},
+				E_BLOCK_CACTUS =
+				{
+					Notes = "The blocktype for cactus"
+				},
+				E_BLOCK_CAKE =
+				{
+					Notes = "The blocktype for cake"
+				},
+				E_BLOCK_CARPET =
+				{
+					Notes = "The blocktype for carpet"
+				},
+<<<<<<< HEAD
+=======
+				StringToDimension =
+				{
+					Params =
+					{
+						{
+							Name = "Input",
+							Type = "string",
+						},
+					},
+					Returns =
+					{
+						{
+							Name = "Dimension",
+							Type = "eDimension",
+						},
+					},
+					Notes = "Converts a string representation to a {{Globals#eDimension|eDimension}} enumerated value. Returns dimNotSet if the input is not a recognized dimension.",
+				},
+				StringToItem =
+				{
+					Params =
+					{
+						{
+							Name = "StringToParse",
+							Type = "string",
+						},
+						{
+							Name = "DestItem",
+							Type = "cItem",
+						},
+					},
+					Returns =
+					{
+						{
+							Type = "boolean",
+						},
+					},
+					Notes = "Parses the item specification in the given string and sets it into DestItem; returns true if successful",
+				},
+				StringToMobType =
+				{
+					Params =
+					{
+						{
+							Name = "MobTypeString",
+							Type = "string",
+						},
+					},
+					Returns =
+					{
+						{
+							Name = "MobType",
+							Type = "eMonsterType",
+						},
+					},
+					Notes = "(<b>DEPRECATED!</b>) Please use cMonster:StringToMobType(). Converts a string representation to an {{Globals#eMonsterType|eMonsterType}} enumerated value",
+				},
+				StripColorCodes =
+				{
+					Params =
+					{
+						{
+							Name = "Input",
+							Type = "string",
+						},
+					},
+					Returns =
+					{
+						{
+							Type = "string",
+						},
+					},
+					Notes = "Removes all control codes used by MC for colors and styles",
+				},
+				TrimString =
+				{
+					Params =
+					{
+						{
+							Name = "Input",
+							Type = "string",
+						},
+					},
+					Returns =
+					{
+						{
+							Type = "string",
+						},
+					},
+					Notes = "Removes whitespace at both ends of the string",
+				},
+			},
+			Constants =
+			{
+				caLeftClick =
+				{
+					Notes = "Left click on a slot",
+				},
+				caRightClick =
+				{
+					Notes = "Right click on a slot",
+				},
+				caShiftLeftClick =
+				{
+					Notes = "Shift + left click on a slot",
+				},
+				caShiftRightClick =
+				{
+					Notes = "Shift + right click on a slot",
+				},
+				caNumber1 =
+				{
+					Notes = "Number key 1",
+				},
+				caNumber2 =
+				{
+					Notes = "Number key 2",
+				},
+				caNumber3 =
+				{
+					Notes = "Number key 3",
+				},
+				caNumber4 =
+				{
+					Notes = "Number key 4",
+				},
+				caNumber5 =
+				{
+					Notes = "Number key 5",
+				},
+				caNumber6 =
+				{
+					Notes = "Number key 6",
+				},
+				caNumber7 =
+				{
+					Notes = "Number key 7",
+				},
+				caNumber8 =
+				{
+					Notes = "Number key 8",
+				},
+				caNumber9 =
+				{
+					Notes = "Number key 9",
+				},
+				caMiddleClick =
+				{
+					Notes = "Middle click, only valid for creative players",
+				},
+				caDropKey =
+				{
+					Notes = "Drop a single item",
+				},
+				caCtrlDropKey =
+				{
+					Notes = "Drop a full stack",
+				},
+				caLeftClickOutside =
+				{
+					Notes = "Left click outside of inventory",
+				},
+				caRightClickOutside =
+				{
+					Notes = "Right click outside of inventory",
+				},
+				caLeftClickOutsideHoldNothing =
+				{
+					Notes = "Left click outside inventory holding nothing",
+				},
+				caRightClickOutsideHoldNothing =
+				{
+					Notes = "Right click outside inventory holding nothing",
+				},
+				caLeftPaintBegin =
+				{
+					Notes = "Begining of left click paint drag action",
+				},
+				caRightPaintBegin =
+				{
+					Notes = "Begining of right click paint drag action",
+				},
+				caMiddlePaintBegin =
+				{
+					Notes = "Begining of middle click paint drag action, only valid for creative players",
+				},
+				caLeftPaintProgress =
+				{
+					Notes = "Add slot for left click paint drag action",
+				},
+				caRightPaintProgress =
+				{
+					Notes = "Add slot for right click paint drag action",
+				},
+				caMiddlePaintProgress =
+				{
+					Notes = "Add slot for middle click paint drag action, only valid for creative players",
+				},
+				caLeftPaintEnd =
+				{
+					Notes = "End of left click paint drag action",
+				},
+				caRightPaintEnd =
+				{
+					Notes = "End of right click paint drag action",
+				},
+				caMiddlePaintEnd =
+				{
+					Notes = "End of middle click paint drag action, only valid for creative players",
+				},
+				caDblClick =
+				{
+					Notes = "Double click action",
+				},
+				caUnknown =
+				{
+					Notes = "Unknown click action"
 				},
 				dtAdmin =
 				{
@@ -16059,6 +18159,7 @@ end
 				{
 					Notes = "The blocktype for carpet"
 				},
+>>>>>>> 3b47eaadb85ac42b70d35d03d919181830b40a41
 				E_BLOCK_CARROTS =
 				{
 					Notes = "The blocktype for carrots"

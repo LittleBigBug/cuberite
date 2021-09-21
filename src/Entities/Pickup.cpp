@@ -115,7 +115,10 @@ cPickup::cPickup(Vector3d a_Pos, const cItem & a_Item, bool IsPlayerCreated, Vec
 
 void cPickup::SpawnOn(cClientHandle & a_Client)
 {
+<<<<<<< HEAD
 	Super::SpawnOn(a_Client);
+=======
+>>>>>>> 3b47eaadb85ac42b70d35d03d919181830b40a41
 	a_Client.SendSpawnEntity(*this);
 	a_Client.SendEntityMetadata(*this);
 }

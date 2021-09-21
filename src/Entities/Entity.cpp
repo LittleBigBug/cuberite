@@ -1395,10 +1395,17 @@ void cEntity::DetectMagma(void)
 	}  // for x
 }
 
+<<<<<<< HEAD
 
 
 
 
+=======
+
+
+
+
+>>>>>>> 3b47eaadb85ac42b70d35d03d919181830b40a41
 bool cEntity::DetectPortal()
 {
 	if (GetWorld()->GetDimension() == dimOverworld)
@@ -2069,6 +2076,7 @@ UInt32 cEntity::GetAttachedID()
 
 bool cEntity::AttachToID(UInt32 a_UniqueID)
 {
+<<<<<<< HEAD
 	if (IsAttachedToID(a_UniqueID))
 	{
 		// Already attached to that entity, nothing to do here
@@ -2083,21 +2091,34 @@ bool cEntity::AttachToID(UInt32 a_UniqueID)
 	);
 
 	return false;
+=======
+	return (
+		(m_AttachedTo != nullptr) &&
+		(a_Entity->GetUniqueID() == m_AttachedTo->GetUniqueID())
+	);
+>>>>>>> 3b47eaadb85ac42b70d35d03d919181830b40a41
 }
 
 
 
 
 
+<<<<<<< HEAD
 bool cEntity::IsAttachedToID(UInt32 a_UniqueID) const
 {
 	return ((m_AttachedTo != nullptr) && (a_UniqueID == m_AttachedTo->GetUniqueID()));
+=======
+bool cEntity::IsOrientationDirty() const
+{
+	return m_bDirtyOrientation;
+>>>>>>> 3b47eaadb85ac42b70d35d03d919181830b40a41
 }
 
 
 
 
 
+<<<<<<< HEAD
 bool cEntity::IsA(const char * a_ClassName) const
 {
 	return ((a_ClassName != nullptr) && (strcmp(a_ClassName, "cEntity") == 0));
@@ -2118,6 +2139,10 @@ bool cEntity::IsOrientationDirty() const
 
 void cEntity::SetHeadYaw(double a_HeadYaw)
 {
+=======
+void cEntity::SetHeadYaw(double a_HeadYaw)
+{
+>>>>>>> 3b47eaadb85ac42b70d35d03d919181830b40a41
 	m_HeadYaw = a_HeadYaw;
 	m_bDirtyHead = true;
 	WrapHeadYaw();
@@ -2366,6 +2391,7 @@ void cEntity::BroadcastDeathMessage(TakeDamageInfo & a_TDI)
 		Name = Player->GetName();
 	}
 	else if (IsMob())
+<<<<<<< HEAD
 	{
 		cMonster * Monster = static_cast<cMonster *>(this);
 		if (Monster->HasCustomName())
@@ -2388,6 +2414,30 @@ void cEntity::BroadcastDeathMessage(TakeDamageInfo & a_TDI)
 	}
 	else
 	{
+=======
+	{
+		cMonster * Monster = static_cast<cMonster *>(this);
+		if (Monster->HasCustomName())
+		{
+			Name = Monster->GetCustomName();
+		}
+		else
+		{
+			// Tamed ocelots are really cats in vanilla.
+			if (Monster->IsTame() && (Monster->GetClass() == AString("cOcelot")))
+			{
+				Name = "Cat";
+			}
+			else
+			{
+				Name = Monster->GetClass();
+				Name.erase(Name.begin());  // Erase the 'c' of the class (e.g. "cWitch" -> "Witch")
+			}
+		}
+	}
+	else
+	{
+>>>>>>> 3b47eaadb85ac42b70d35d03d919181830b40a41
 		// If the entity is neither a player nor a mob, we should quit.
 		return;
 	}
